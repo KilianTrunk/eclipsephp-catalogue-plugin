@@ -1,15 +1,15 @@
 <?php
 
-namespace Eclipse\PluginTemplate;
+namespace Eclipse\Catalogue;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
-class PluginTemplate implements Plugin
+class CataloguePlugin implements Plugin
 {
     public function getId(): string
     {
-        return 'plugin-template';
+        return 'eclipse-catalogue';
     }
 
     public function register(Panel $panel): void

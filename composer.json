@@ -1,12 +1,15 @@
 {
-    "name": "eclipsephp/plugin-template",
-    "description": "Eclipse template for Filament plugins",
+    "name": "eclipsephp/catalogue-plugin",
+    "description": "Filament plugin for product catalogue",
     "keywords": [
         "eclipse",
         "filament",
-        "laravel"
+        "laravel",
+        "catalogue",
+        "plugin",
+        "product"
     ],
-    "homepage": "https://github.com/DataLinx/eclipsephp-plugin-template",
+    "homepage": "https://github.com/DataLinx/eclipsephp-catalogue-plugin",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -26,9 +29,9 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "Eclipse\\PluginTemplate\\": "src/",
-            "Eclipse\\PluginTemplate\\Factories\\": "database/factories/",
-            "Eclipse\\PluginTemplate\\Seeders\\": "database/seeders/"
+            "Eclipse\\Catalogue\\": "src/",
+            "Eclipse\\Catalogue\\Factories\\": "database/factories/",
+            "Eclipse\\Catalogue\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
@@ -78,7 +81,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Eclipse\\PluginTemplate\\PluginTemplateServiceProvider"
+                "Eclipse\\Catalogue\\CatalogueServiceProvider"
             ]
         }
     }

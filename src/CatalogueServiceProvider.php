@@ -1,13 +1,13 @@
 <?php
 
-namespace Eclipse\PluginTemplate;
+namespace Eclipse\Catalogue;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class PluginTemplateServiceProvider extends PackageServiceProvider
+class CatalogueServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'plugin-template';
+    public static string $name = 'eclipse-catalogue';
 
     public function configurePackage(Package $package): void
     {

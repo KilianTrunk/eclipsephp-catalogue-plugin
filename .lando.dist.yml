@@ -1,11 +1,12 @@
-name: eclipsephp-plugin-template
+#file: noinspection ComposeUnknownKeys
+name: eclipse-catalogue
 services:
   appserver:
     type: php:custom
     xdebug: "debug,develop,coverage"
     via: cli
     overrides:
-      image: slimdeluxe/php:8.2-v1.0
+      image: slimdeluxe/php:8.2-v1.1
 tooling:
   php:
     service: appserver
