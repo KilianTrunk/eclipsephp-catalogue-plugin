@@ -14,7 +14,7 @@ class CataloguePlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        //
+        $panel->discoverResources(__DIR__.'/Filament/Resources', 'Eclipse\\Catalogue\\Filament\\Resources');
     }
 
     public function boot(Panel $panel): void

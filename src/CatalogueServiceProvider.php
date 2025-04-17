@@ -13,6 +13,8 @@ class CatalogueServiceProvider extends PackageServiceProvider
     {
         $package->name(static::$name)
             ->hasConfigFile()
-            ->hasTranslations();
+            ->hasTranslations()
+            ->discoversMigrations()
+            ->runsMigrations();
     }
 }
