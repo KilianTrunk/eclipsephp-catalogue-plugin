@@ -3,12 +3,14 @@
 namespace Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 
 use Eclipse\Catalogue\Filament\Resources\ProductResource;
+use Eclipse\Common\Foundation\Pages\HasScoutSearch;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Resources\Pages\ListRecords\Concerns\Translatable;
 
 class ListProducts extends ListRecords
 {
-    use ListRecords\Concerns\Translatable;
+    use Translatable, HasScoutSearch;
 
     protected static string $resource = ProductResource::class;
 

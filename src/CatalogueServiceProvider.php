@@ -2,6 +2,8 @@
 
 namespace Eclipse\Catalogue;
 
+use Eclipse\Catalogue\Models\Product;
+use Illuminate\Support\Facades\Config;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -16,5 +18,18 @@ class CatalogueServiceProvider extends PackageServiceProvider
             ->hasTranslations()
             ->discoversMigrations()
             ->runsMigrations();
+    }
+
+    public function register()
+    {
+        parent::register();
+
+        $settings = Config::get('scout.typesense.model-settings', []);
+
+        $settings += [
+            Product::class => Product::getTypesenseSettings(),
+        ];
+
+        Config::set('scout.typesense.model-settings', $settings);
     }
 }

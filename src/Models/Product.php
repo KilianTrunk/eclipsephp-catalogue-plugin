@@ -3,6 +3,7 @@
 namespace Eclipse\Catalogue\Models;
 
 use Eclipse\Catalogue\Factories\ProductFactory;
+use Eclipse\Common\Foundation\Models\IsSearchable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,7 +11,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Product extends Model
 {
-    use HasFactory, HasTranslations, SoftDeletes;
+    use HasFactory, HasTranslations, SoftDeletes, IsSearchable;
 
     protected $table = 'catalogue_products';
 
@@ -36,10 +37,68 @@ class Product extends Model
         'name' => 'array',
         'short_description' => 'array',
         'description' => 'array',
+        'deleted_at' => 'datetime',
     ];
 
     protected static function newFactory(): ProductFactory
     {
         return ProductFactory::new();
+    }
+
+    public static function getTypesenseSettings(): array
+    {
+        return [
+            'collection-schema' => [
+                'fields' => [
+                    [
+                        'name' => 'id',
+                        'type' => 'string',
+                    ],
+                    [
+                        'name' => 'code',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'barcode',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'created_at',
+                        'type' => 'int64',
+                    ],
+                    [
+                        'name' => 'name_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'short_description_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'description_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => '__soft_deleted',
+                        'type' => 'int32',
+                        'optional' => true,
+                    ],
+                ],
+            ],
+            'search-parameters' => [
+                'query_by' => implode(', ', [
+                    'code',
+                    'barcode',
+                    'name_*',
+                    'short_description_*',
+                    'description_*',
+                ]),
+            ],
+        ];
     }
 }

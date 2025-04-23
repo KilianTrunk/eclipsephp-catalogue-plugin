@@ -23,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductResource extends Resource implements HasShieldPermissions
@@ -36,6 +37,8 @@ class ProductResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationGroup = 'Catalogue';
+
+    protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Form $form): Form
     {
@@ -105,6 +108,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->numeric(3)
                     ->suffix(' kg'),
             ])
+            ->searchable()
             ->filters([
                 TrashedFilter::make(),
             ])
@@ -142,7 +146,22 @@ class ProductResource extends Resource implements HasShieldPermissions
 
     public static function getGloballySearchableAttributes(): array
     {
-        return [];
+        return [
+            'code',
+            'barcode',
+            'manufacturers_code',
+            'suppliers_code',
+            'name',
+            'short_description',
+            'description',
+        ];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return array_filter([
+            'Code' => $record->code,
+        ]);
     }
 
     public static function getPermissionPrefixes(): array
