@@ -11,7 +11,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Product extends Model
 {
-    use HasFactory, HasTranslations, SoftDeletes, IsSearchable;
+    use HasFactory, HasTranslations, IsSearchable, SoftDeletes;
 
     protected $table = 'catalogue_products';
 

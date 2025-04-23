@@ -10,7 +10,7 @@ use Filament\Resources\Pages\ListRecords\Concerns\Translatable;
 
 class ListProducts extends ListRecords
 {
-    use Translatable, HasScoutSearch;
+    use HasScoutSearch, Translatable;
 
     protected static string $resource = ProductResource::class;
 
