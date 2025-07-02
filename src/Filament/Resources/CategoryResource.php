@@ -2,10 +2,9 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
+use Eclipse\Catalogue\Filament\Resources\CategoryResource\Pages;
 use Eclipse\Catalogue\Models\Category;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -22,9 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Eclipse\Catalogue\Filament\Resources\CategoryResource\Pages;
 
 class CategoryResource extends Resource
 {
