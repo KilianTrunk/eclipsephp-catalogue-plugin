@@ -4,7 +4,7 @@ namespace Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages;
 
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource;
 use Eclipse\Catalogue\Models\TaxClass;
-use Eclipse\Core\Services\Registry;
+use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTaxClass extends CreateRecord
@@ -18,13 +18,13 @@ class CreateTaxClass extends CreateRecord
             TaxClass::where('is_default', true)->update(['is_default' => false]);
         }
 
-        // Auto-set site_id if tenancy is configured
+        // Auto-set current tenant_id if tenancy is configured
         if (config('eclipse-catalogue.tenancy.foreign_key')) {
-            $currentSite = Registry::getSite();
-            if ($currentSite) {
-                $data[config('eclipse-catalogue.tenancy.foreign_key')] = $currentSite->id;
+            $currentTenant = Filament::getTenant();
+            if ($currentTenant) {
+                $data[config('eclipse-catalogue.tenancy.foreign_key')] = $currentTenant->id;
             } else {
-                throw new \Exception('Current site not available. Cannot create TaxClass without site context.');
+                throw new \Exception('Current tenant not available. Cannot create TaxClass without tenant context.');
             }
         }
 

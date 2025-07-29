@@ -3,7 +3,6 @@
 namespace Eclipse\Catalogue\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
 
@@ -74,11 +73,5 @@ class TaxClass extends Model
     public function isDefault(): bool
     {
         return $this->is_default;
-    }
-
-    /** @return BelongsTo<\Eclipse\Core\Models\Site, self> */
-    public function site(): BelongsTo
-    {
-        return $this->belongsTo(\Eclipse\Core\Models\Site::class);
     }
 }
