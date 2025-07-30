@@ -5,6 +5,7 @@ namespace Eclipse\Catalogue\Filament\Resources;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages;
 use Eclipse\Catalogue\Models\TaxClass;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -139,10 +140,18 @@ class TaxClassResource extends Resource implements HasShieldPermissions
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        $tenantId = Filament::getTenant()?->id;
+        if ($tenantFK && $tenantId) {
+            $query->where($tenantFK, $tenantId);
+        }
+
+        return $query;
     }
 
     public static function getPermissionPrefixes(): array
