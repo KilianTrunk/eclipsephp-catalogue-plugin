@@ -8,6 +8,7 @@ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 
 class TenantFieldsComponent
 {
@@ -62,7 +63,7 @@ class TenantFieldsComponent
                         ->afterStateUpdated(function ($state, callable $set, callable $get) use ($tenantId, $tenantName) {
                             if ($state && $get("tenant_data.{$tenantId}.is_default_purchase")) {
                                 $set("tenant_data.{$tenantId}.is_default_purchase", false);
-                                \Filament\Notifications\Notification::make()
+                                Notification::make()
                                     ->warning()
                                     ->title(__('eclipse-catalogue::price-list.notifications.conflict_resolved_title'))
                                     ->body(__('eclipse-catalogue::price-list.notifications.conflict_resolved_purchase_disabled', ['tenant' => $tenantName]))
@@ -78,7 +79,7 @@ class TenantFieldsComponent
                         ->afterStateUpdated(function ($state, callable $set, callable $get) use ($tenantId, $tenantName) {
                             if ($state && $get("tenant_data.{$tenantId}.is_default")) {
                                 $set("tenant_data.{$tenantId}.is_default", false);
-                                \Filament\Notifications\Notification::make()
+                                Notification::make()
                                     ->warning()
                                     ->title(__('eclipse-catalogue::price-list.notifications.conflict_resolved_title'))
                                     ->body(__('eclipse-catalogue::price-list.notifications.conflict_resolved_selling_disabled', ['tenant' => $tenantName]))

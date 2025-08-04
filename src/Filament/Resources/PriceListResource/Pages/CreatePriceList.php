@@ -6,9 +6,18 @@ use Eclipse\Catalogue\Filament\Resources\PriceListResource;
 use Eclipse\Catalogue\Forms\Components\TenantFieldsComponent;
 use Eclipse\Catalogue\Models\PriceListData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class CreatePriceList extends CreateRecord
 {
@@ -19,18 +28,18 @@ class CreatePriceList extends CreateRecord
     public function form(Form $form): Form
     {
         $baseSchema = [
-            \Filament\Forms\Components\Section::make(__('eclipse-catalogue::price-list.sections.information'))
+            Section::make(__('eclipse-catalogue::price-list.sections.information'))
                 ->description(__('eclipse-catalogue::price-list.sections.information_description'))
                 ->schema([
-                    \Filament\Forms\Components\Grid::make(2)
+                    Grid::make(2)
                         ->schema([
-                            \Filament\Forms\Components\TextInput::make('name')
+                            TextInput::make('name')
                                 ->label(__('eclipse-catalogue::price-list.fields.name'))
                                 ->required()
                                 ->maxLength(255)
                                 ->placeholder(__('eclipse-catalogue::price-list.placeholders.name')),
 
-                            \Filament\Forms\Components\TextInput::make('code')
+                            TextInput::make('code')
                                 ->label(__('eclipse-catalogue::price-list.fields.code'))
                                 ->maxLength(255)
                                 ->placeholder(__('eclipse-catalogue::price-list.placeholders.code'))
@@ -41,24 +50,27 @@ class CreatePriceList extends CreateRecord
                                 ),
                         ]),
 
-                    \Filament\Forms\Components\Grid::make(2)
+                    Grid::make(2)
                         ->schema([
-                            \Filament\Forms\Components\Select::make('currency_id')
+                            Select::make('currency_id')
                                 ->label(__('eclipse-catalogue::price-list.fields.currency'))
-                                ->relationship('currency', 'name')
-                                ->searchable()
+                                ->relationship('currency', 'name', function ($query) {
+                                    return $query->select('id', 'name')->where('is_active', true);
+                                })
+                                ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->id} - {$record->name}")
+                                ->searchable(['id', 'name'])
                                 ->preload()
                                 ->required()
                                 ->placeholder(__('eclipse-catalogue::price-list.placeholders.currency')),
 
-                            \Filament\Forms\Components\Toggle::make('tax_included')
+                            Toggle::make('tax_included')
                                 ->label(__('eclipse-catalogue::price-list.fields.tax_included'))
                                 ->helperText(__('eclipse-catalogue::price-list.help_text.tax_included'))
                                 ->default(false)
                                 ->inline(false),
                         ]),
 
-                    \Filament\Forms\Components\Textarea::make('notes')
+                    Textarea::make('notes')
                         ->label(__('eclipse-catalogue::price-list.fields.notes'))
                         ->placeholder(__('eclipse-catalogue::price-list.placeholders.notes'))
                         ->rows(3)
@@ -74,18 +86,18 @@ class CreatePriceList extends CreateRecord
             $baseSchema[] = TenantFieldsComponent::make();
         } else {
             // No tenancy - add simple settings section
-            $baseSchema[] = \Filament\Forms\Components\Section::make(__('eclipse-catalogue::price-list.sections.settings'))
+            $baseSchema[] = Section::make(__('eclipse-catalogue::price-list.sections.settings'))
                 ->description(__('eclipse-catalogue::price-list.sections.settings_description'))
                 ->schema([
-                    \Filament\Forms\Components\Toggle::make('is_active')
+                    Toggle::make('is_active')
                         ->label(__('eclipse-catalogue::price-list.fields.is_active'))
                         ->helperText(__('eclipse-catalogue::price-list.help_text.is_active'))
                         ->default(true)
                         ->inline(false),
 
-                    \Filament\Forms\Components\Fieldset::make(__('eclipse-catalogue::price-list.sections.default_settings'))
+                    Fieldset::make(__('eclipse-catalogue::price-list.sections.default_settings'))
                         ->schema([
-                            \Filament\Forms\Components\Toggle::make('is_default')
+                            Toggle::make('is_default')
                                 ->label(__('eclipse-catalogue::price-list.fields.is_default'))
                                 ->helperText(__('eclipse-catalogue::price-list.help_text.is_default'))
                                 ->inline(false)
@@ -93,7 +105,7 @@ class CreatePriceList extends CreateRecord
                                 ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                     if ($state && $get('is_default_purchase')) {
                                         $set('is_default_purchase', false);
-                                        \Filament\Notifications\Notification::make()
+                                        Notification::make()
                                             ->warning()
                                             ->title(__('eclipse-catalogue::price-list.notifications.conflict_resolved_title'))
                                             ->body(__('eclipse-catalogue::price-list.notifications.conflict_resolved_purchase_disabled_simple'))
@@ -101,7 +113,7 @@ class CreatePriceList extends CreateRecord
                                     }
                                 }),
 
-                            \Filament\Forms\Components\Toggle::make('is_default_purchase')
+                            Toggle::make('is_default_purchase')
                                 ->label(__('eclipse-catalogue::price-list.fields.is_default_purchase'))
                                 ->helperText(__('eclipse-catalogue::price-list.help_text.is_default_purchase'))
                                 ->inline(false)
@@ -109,7 +121,7 @@ class CreatePriceList extends CreateRecord
                                 ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                     if ($state && $get('is_default')) {
                                         $set('is_default', false);
-                                        \Filament\Notifications\Notification::make()
+                                        Notification::make()
                                             ->warning()
                                             ->title(__('eclipse-catalogue::price-list.notifications.conflict_resolved_title'))
                                             ->body(__('eclipse-catalogue::price-list.notifications.conflict_resolved_selling_disabled_simple'))
@@ -159,34 +171,28 @@ class CreatePriceList extends CreateRecord
         // Create the main price list record
         $record = static::getModel()::create($data);
 
-        // Create tenant-specific data
-        if (! empty($tenantData)) {
-            foreach ($tenantData as $tenantId => $tenantSpecificData) {
-                // Handle default constraints
-                $this->handleDefaultConstraints($tenantSpecificData, $tenantId);
+        // Create tenant-specific data for ALL tenants
+        $tenantModel = config('eclipse-catalogue.tenancy.model');
+        $tenants = $tenantModel::all();
 
-                PriceListData::create([
-                    'price_list_id' => $record->id,
-                    $tenantFK => $tenantId,
-                    'is_active' => $tenantSpecificData['is_active'] ?? true,
-                    'is_default' => $tenantSpecificData['is_default'] ?? false,
-                    'is_default_purchase' => $tenantSpecificData['is_default_purchase'] ?? false,
-                ]);
-            }
-        } else {
-            // Create default records for all tenants
-            $tenantModel = config('eclipse-catalogue.tenancy.model');
-            $tenants = $tenantModel::all();
+        foreach ($tenants as $tenant) {
+            $tenantId = $tenant->id;
+            $tenantSpecificData = $tenantData[$tenantId] ?? [
+                'is_active' => true,
+                'is_default' => false,
+                'is_default_purchase' => false,
+            ];
 
-            foreach ($tenants as $tenant) {
-                PriceListData::create([
-                    'price_list_id' => $record->id,
-                    $tenantFK => $tenant->id,
-                    'is_active' => true,
-                    'is_default' => false,
-                    'is_default_purchase' => false,
-                ]);
-            }
+            // Handle default constraints
+            $this->handleDefaultConstraints($tenantSpecificData, $tenantId);
+
+            PriceListData::create([
+                'price_list_id' => $record->id,
+                $tenantFK => $tenantId,
+                'is_active' => $tenantSpecificData['is_active'] ?? true,
+                'is_default' => $tenantSpecificData['is_default'] ?? false,
+                'is_default_purchase' => $tenantSpecificData['is_default_purchase'] ?? false,
+            ]);
         }
 
         return $record;
@@ -212,7 +218,7 @@ class CreatePriceList extends CreateRecord
         if (! $tenantFK) {
             // No tenancy - validate simple fields
             if (($data['is_default'] ?? false) && ($data['is_default_purchase'] ?? false)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'is_default' => __('eclipse-catalogue::price-list.validation.cannot_be_both_defaults'),
                     'is_default_purchase' => __('eclipse-catalogue::price-list.validation.cannot_be_both_defaults'),
                 ]);
@@ -250,7 +256,7 @@ class CreatePriceList extends CreateRecord
                 $this->form->fill(['selected_tenant' => $firstErrorTenantId]);
             }
 
-            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+            throw ValidationException::withMessages($errors);
         }
     }
 
@@ -261,7 +267,7 @@ class CreatePriceList extends CreateRecord
         // Validate that a price list cannot be both default selling and purchase
         if (($tenantData['is_default'] ?? false) && ($tenantData['is_default_purchase'] ?? false)) {
             $errorKey = $tenantId ? "tenant_data.{$tenantId}" : '';
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 "{$errorKey}.is_default" => 'A price list cannot be both default selling and default purchase.',
                 "{$errorKey}.is_default_purchase" => 'A price list cannot be both default selling and default purchase.',
             ]);

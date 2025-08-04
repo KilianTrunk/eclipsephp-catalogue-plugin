@@ -9,7 +9,15 @@ use Eclipse\Catalogue\Traits\HasTenantFields;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,18 +39,18 @@ class EditPriceList extends EditRecord
     public function form(Form $form): Form
     {
         $baseSchema = [
-            \Filament\Forms\Components\Section::make(__('eclipse-catalogue::price-list.sections.information'))
+            Section::make(__('eclipse-catalogue::price-list.sections.information'))
                 ->description(__('eclipse-catalogue::price-list.sections.information_description'))
                 ->schema([
-                    \Filament\Forms\Components\Grid::make(2)
+                    Grid::make(2)
                         ->schema([
-                            \Filament\Forms\Components\TextInput::make('name')
+                            TextInput::make('name')
                                 ->label(__('eclipse-catalogue::price-list.fields.name'))
                                 ->required()
                                 ->maxLength(255)
                                 ->placeholder(__('eclipse-catalogue::price-list.placeholders.name')),
 
-                            \Filament\Forms\Components\TextInput::make('code')
+                            TextInput::make('code')
                                 ->label(__('eclipse-catalogue::price-list.fields.code'))
                                 ->maxLength(255)
                                 ->placeholder(__('eclipse-catalogue::price-list.placeholders.code'))
@@ -53,24 +61,27 @@ class EditPriceList extends EditRecord
                                 ),
                         ]),
 
-                    \Filament\Forms\Components\Grid::make(2)
+                    Grid::make(2)
                         ->schema([
-                            \Filament\Forms\Components\Select::make('currency_id')
+                            Select::make('currency_id')
                                 ->label(__('eclipse-catalogue::price-list.fields.currency'))
-                                ->relationship('currency', 'name')
-                                ->searchable()
+                                ->relationship('currency', 'name', function ($query) {
+                                    return $query->select('id', 'name')->where('is_active', true);
+                                })
+                                ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->id} - {$record->name}")
+                                ->searchable(['id', 'name'])
                                 ->preload()
                                 ->required()
                                 ->placeholder(__('eclipse-catalogue::price-list.placeholders.currency')),
 
-                            \Filament\Forms\Components\Toggle::make('tax_included')
+                            Toggle::make('tax_included')
                                 ->label(__('eclipse-catalogue::price-list.fields.tax_included'))
                                 ->helperText(__('eclipse-catalogue::price-list.help_text.tax_included'))
                                 ->default(false)
                                 ->inline(false),
                         ]),
 
-                    \Filament\Forms\Components\Textarea::make('notes')
+                    Textarea::make('notes')
                         ->label(__('eclipse-catalogue::price-list.fields.notes'))
                         ->placeholder(__('eclipse-catalogue::price-list.placeholders.notes'))
                         ->rows(3)
@@ -86,18 +97,18 @@ class EditPriceList extends EditRecord
             $baseSchema[] = TenantFieldsComponent::make();
         } else {
             // No tenancy - add simple settings section
-            $baseSchema[] = \Filament\Forms\Components\Section::make(__('eclipse-catalogue::price-list.sections.settings'))
+            $baseSchema[] = Section::make(__('eclipse-catalogue::price-list.sections.settings'))
                 ->description(__('eclipse-catalogue::price-list.sections.settings_description'))
                 ->schema([
-                    \Filament\Forms\Components\Toggle::make('is_active')
+                    Toggle::make('is_active')
                         ->label(__('eclipse-catalogue::price-list.fields.is_active'))
                         ->helperText(__('eclipse-catalogue::price-list.help_text.is_active'))
                         ->default(true)
                         ->inline(false),
 
-                    \Filament\Forms\Components\Fieldset::make(__('eclipse-catalogue::price-list.sections.default_settings'))
+                    Fieldset::make(__('eclipse-catalogue::price-list.sections.default_settings'))
                         ->schema([
-                            \Filament\Forms\Components\Toggle::make('is_default')
+                            Toggle::make('is_default')
                                 ->label(__('eclipse-catalogue::price-list.fields.is_default'))
                                 ->helperText(__('eclipse-catalogue::price-list.help_text.is_default'))
                                 ->inline(false)
@@ -105,7 +116,7 @@ class EditPriceList extends EditRecord
                                 ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                     if ($state && $get('is_default_purchase')) {
                                         $set('is_default_purchase', false);
-                                        \Filament\Notifications\Notification::make()
+                                        Notification::make()
                                             ->warning()
                                             ->title(__('eclipse-catalogue::price-list.notifications.conflict_resolved_title'))
                                             ->body(__('eclipse-catalogue::price-list.notifications.conflict_resolved_purchase_disabled_simple'))
@@ -113,7 +124,7 @@ class EditPriceList extends EditRecord
                                     }
                                 }),
 
-                            \Filament\Forms\Components\Toggle::make('is_default_purchase')
+                            Toggle::make('is_default_purchase')
                                 ->label(__('eclipse-catalogue::price-list.fields.is_default_purchase'))
                                 ->helperText(__('eclipse-catalogue::price-list.help_text.is_default_purchase'))
                                 ->inline(false)
@@ -121,7 +132,7 @@ class EditPriceList extends EditRecord
                                 ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                     if ($state && $get('is_default')) {
                                         $set('is_default', false);
-                                        \Filament\Notifications\Notification::make()
+                                        Notification::make()
                                             ->warning()
                                             ->title(__('eclipse-catalogue::price-list.notifications.conflict_resolved_title'))
                                             ->body(__('eclipse-catalogue::price-list.notifications.conflict_resolved_selling_disabled_simple'))
@@ -226,12 +237,18 @@ class EditPriceList extends EditRecord
             return $record;
         }
 
-        if (empty($this->tenantDataToProcess)) {
-            return $record;
-        }
+        // Update tenant-specific data for ALL tenants
+        $tenantModel = config('eclipse-catalogue.tenancy.model');
+        $tenants = $tenantModel::all();
 
-        // Update tenant-specific data after the main record is saved
-        foreach ($this->tenantDataToProcess as $tenantId => $tenantSpecificData) {
+        foreach ($tenants as $tenant) {
+            $tenantId = $tenant->id;
+            $tenantSpecificData = $this->tenantDataToProcess[$tenantId] ?? [
+                'is_active' => true,
+                'is_default' => false,
+                'is_default_purchase' => false,
+            ];
+
             // Handle default constraints
             $this->handleDefaultConstraints($tenantSpecificData, $tenantId);
 

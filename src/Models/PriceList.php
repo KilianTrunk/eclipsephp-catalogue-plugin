@@ -2,6 +2,7 @@
 
 namespace Eclipse\Catalogue\Models;
 
+use Eclipse\Catalogue\Factories\PriceListFactory;
 use Eclipse\World\Models\Currency;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,11 +31,17 @@ class PriceList extends Model
         'is_default_purchase',
     ];
 
+    /**
+     * Get the currency for the price list
+     */
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
+    /**
+     * Get the price list data for the price list
+     */
     public function priceListData(): HasMany
     {
         return $this->hasMany(PriceListData::class);
@@ -43,7 +50,7 @@ class PriceList extends Model
     /**
      * Get the tenant-specific data for the current tenant
      */
-    public function currentTenantData()
+    public function currentTenantData(): ?PriceListData
     {
         $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
         $tenantId = Filament::getTenant()?->id;
@@ -57,8 +64,10 @@ class PriceList extends Model
 
     /**
      * Get tenant-specific data for a specific tenant
+     *
+     * @param  int|null  $tenantId  The tenant ID to get data for
      */
-    public function getTenantData(?int $tenantId = null)
+    public function getTenantData(?int $tenantId = null): ?PriceListData
     {
         $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
         $targetTenantId = $tenantId ?: Filament::getTenant()?->id;
@@ -70,10 +79,10 @@ class PriceList extends Model
         return $this->priceListData()->first();
     }
 
-    // Removed problematic global scope - using accessor methods instead
-
-    // Accessor methods for tenant-scoped attributes
-    public function getIsActiveAttribute()
+    /**
+     * Accessor for the is_active attribute
+     */
+    public function getIsActiveAttribute(): bool
     {
         if (isset($this->attributes['is_active'])) {
             return $this->attributes['is_active'];
@@ -84,7 +93,10 @@ class PriceList extends Model
         return $tenantData ? $tenantData->is_active : true;
     }
 
-    public function getIsDefaultAttribute()
+    /**
+     * Accessor for the is_default attribute
+     */
+    public function getIsDefaultAttribute(): bool
     {
         if (isset($this->attributes['is_default'])) {
             return $this->attributes['is_default'];
@@ -95,7 +107,10 @@ class PriceList extends Model
         return $tenantData ? $tenantData->is_default : false;
     }
 
-    public function getIsDefaultPurchaseAttribute()
+    /**
+     * Accessor for the is_default_purchase attribute
+     */
+    public function getIsDefaultPurchaseAttribute(): bool
     {
         if (isset($this->attributes['is_default_purchase'])) {
             return $this->attributes['is_default_purchase'];
@@ -107,7 +122,10 @@ class PriceList extends Model
     }
 
     /**
-     * Get the default selling price list for current tenant
+     * Get the default selling price list for the current tenant
+     *
+     * @param  int|null  $tenantId  The tenant ID to get the default for
+     * @return static|null
      */
     public static function getDefaultSelling(?int $tenantId = null): ?self
     {
@@ -125,7 +143,10 @@ class PriceList extends Model
     }
 
     /**
-     * Get the default purchase price list for current tenant
+     * Get the default purchase price list for the current tenant
+     *
+     * @param  int|null  $tenantId  The tenant ID to get the default for
+     * @return static|null
      */
     public static function getDefaultPurchase(?int $tenantId = null): ?self
     {
@@ -152,8 +173,11 @@ class PriceList extends Model
         ];
     }
 
-    protected static function newFactory()
+    /**
+     * Create a new factory instance for the model
+     */
+    protected static function newFactory(): PriceListFactory
     {
-        return \Eclipse\Catalogue\Factories\PriceListFactory::new();
+        return PriceListFactory::new();
     }
 }

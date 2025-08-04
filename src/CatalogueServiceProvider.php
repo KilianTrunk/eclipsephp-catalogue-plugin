@@ -38,9 +38,6 @@ class CatalogueServiceProvider extends PackageServiceProvider
     {
         parent::boot();
 
-        // Load views
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'eclipse-catalogue');
-
         // Register Livewire components
         if (class_exists(\Livewire\Livewire::class)) {
             \Livewire\Livewire::component('eclipse-catalogue::tenant-switcher', \Eclipse\Catalogue\Livewire\TenantSwitcher::class);
