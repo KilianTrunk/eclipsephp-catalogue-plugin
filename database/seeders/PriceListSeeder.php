@@ -32,7 +32,7 @@ class PriceListSeeder extends Seeder
 
             if ($tenantFK && $tenantModel && class_exists($tenantModel)) {
                 $tenants = $tenantModel::all();
-                
+
                 foreach ($tenants as $tenant) {
                     PriceListData::factory()->create([
                         'price_list_id' => $priceList->id,
@@ -53,4 +53,4 @@ class PriceListSeeder extends Seeder
             }
         }
     }
-} 
+}
