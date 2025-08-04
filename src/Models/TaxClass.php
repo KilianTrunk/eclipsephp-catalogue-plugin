@@ -92,4 +92,12 @@ class TaxClass extends Model
     {
         return $this->is_default;
     }
+
+    public function tenant(): BelongsTo
+    {
+        $tenantModel = config('eclipse-catalogue.tenancy.model');
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+
+        return $this->belongsTo($tenantModel, $tenantFK);
+    }
 }

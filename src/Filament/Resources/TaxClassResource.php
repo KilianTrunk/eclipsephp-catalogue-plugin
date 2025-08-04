@@ -37,6 +37,8 @@ class TaxClassResource extends Resource implements HasShieldPermissions
 
     protected static bool $isScopedToTenant = true;
 
+    protected static ?string $tenantOwnershipRelationshipName = 'tenant';
+
     public static function getModelLabel(): string
     {
         return __('eclipse-catalogue::tax-class.singular');
