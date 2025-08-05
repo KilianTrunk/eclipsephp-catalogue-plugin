@@ -7,7 +7,6 @@ use Eclipse\Catalogue\Models\TaxClass;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
-use Filament\Facades\Filament;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTaxClass extends EditRecord
