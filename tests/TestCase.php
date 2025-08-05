@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Filament\Facades\Filament;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Workbench\App\Models\Site;
@@ -48,7 +49,7 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Set up default "super admin" user and tenant (site)
+     * Set up default "super admin" user (without tenant)
      */
     protected function setUpSuperAdmin(): self
     {
@@ -56,6 +57,22 @@ abstract class TestCase extends BaseTestCase
         $this->superAdmin->assignRole('super_admin')->save();
 
         $this->actingAs($this->superAdmin);
+
+        return $this;
+    }
+
+    /**
+     * Set up default "super admin" user and tenant
+     */
+    protected function setUpSuperAdminAndTenant(): self
+    {
+        $this->setUpSuperAdmin();
+
+        $site = Site::first();
+
+        $this->superAdmin->sites()->attach($site);
+
+        Filament::setTenant($site);
 
         return $this;
     }

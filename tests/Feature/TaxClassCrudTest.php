@@ -4,6 +4,7 @@ use Eclipse\Catalogue\Models\TaxClass;
 
 beforeEach(function () {
     $this->migrate();
+    $this->setUpSuperAdminAndTenant();
 });
 
 it('can create a tax class', function () {

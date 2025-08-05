@@ -4,6 +4,7 @@ use Eclipse\Catalogue\Models\TaxClass;
 
 beforeEach(function () {
     $this->migrate();
+    $this->setUpSuperAdminAndTenant();
 });
 
 it('ensures only one class can be set as default when creating', function () {

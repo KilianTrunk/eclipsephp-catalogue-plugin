@@ -5,6 +5,8 @@ use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->migrate();
+    // Tenant is required because of the foreign key
+    $this->setUpSuperAdminAndTenant();
 });
 
 it('can create a tax class', function () {

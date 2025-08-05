@@ -40,18 +40,6 @@ class EditTaxClass extends EditRecord
             $query->update(['is_default' => false]);
         }
 
-        // Ensure tenant id is preserved if tenancy is configured
-        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
-        if ($tenantFK && ! isset($data[$tenantFK])) {
-            // Use current tenant from Filament or preserve existing
-            $tenantId = Filament::getTenant()?->id;
-            if ($tenantId) {
-                $data[$tenantFK] = $tenantId;
-            } else {
-                $data[$tenantFK] = $this->record->getAttribute($tenantFK);
-            }
-        }
-
         return $data;
     }
 }

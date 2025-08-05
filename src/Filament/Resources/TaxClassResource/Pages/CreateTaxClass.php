@@ -27,15 +27,6 @@ class CreateTaxClass extends CreateRecord
             $query->update(['is_default' => false]);
         }
 
-        // Auto-set current tenant_id if tenancy is configured
-        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
-        $tenantId = Filament::getTenant()?->id;
-        if ($tenantFK && $tenantId) {
-            $data[$tenantFK] = $tenantId;
-        } elseif ($tenantFK) {
-            throw new \Exception('Current tenant not available. Cannot create TaxClass without tenant context.');
-        }
-
         return $data;
     }
 }

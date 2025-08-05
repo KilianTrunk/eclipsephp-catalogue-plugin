@@ -2,10 +2,12 @@
 
 namespace Eclipse\Catalogue\Models;
 
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class TaxClass extends Model
 {
@@ -40,6 +42,22 @@ class TaxClass extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function (self $category): void {
+            // Set tenant foreign key, if configured
+            $tenantModel = config('eclipse-catalogue.tenancy.model');
+            $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+
+            if ($tenantModel && $tenantFK) {
+                $tenant = Filament::getTenant();
+
+                if (empty($tenant)) {
+                    throw new RuntimeException('Tenancy is enabled, but no tenant is set');
+                }
+
+                $category->{$tenantFK} = $tenant->id;
+            }
+        });
 
         static::saving(function ($model) {
             // If this class is being set as default, unset all other defaults within the same tenant
