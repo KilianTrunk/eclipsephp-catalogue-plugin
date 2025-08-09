@@ -47,26 +47,4 @@ class CreatePriceList extends CreateRecord
             $this->getCancelFormAction(),
         ];
     }
-
-    /**
-     * Store current tenant data before submitting
-     */
-    protected function storeCurrentTenantData(): void
-    {
-        $formData = $this->form->getState();
-        $selectedTenant = $formData['selected_tenant'] ?? null;
-
-        if ($selectedTenant && config('eclipse-catalogue.tenancy.foreign_key')) {
-            $currentData = [
-                'is_active' => $formData['tenant_data'][$selectedTenant]['is_active'] ?? true,
-                'is_default' => $formData['tenant_data'][$selectedTenant]['is_default'] ?? false,
-                'is_default_purchase' => $formData['tenant_data'][$selectedTenant]['is_default_purchase'] ?? false,
-            ];
-
-            $allTenantData = $formData['all_tenant_data'] ?? [];
-            $allTenantData[$selectedTenant] = $currentData;
-
-            $this->form->fill(['all_tenant_data' => $allTenantData]);
-        }
-    }
 }

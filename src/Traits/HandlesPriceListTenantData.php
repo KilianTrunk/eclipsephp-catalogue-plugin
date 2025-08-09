@@ -7,6 +7,29 @@ use Eclipse\Catalogue\Models\PriceList;
 trait HandlesPriceListTenantData
 {
     /**
+     * Persist the currently selected tenant's values into the hidden
+     * all_tenant_data state so switching tenants doesn't lose changes.
+     */
+    protected function storeCurrentTenantData(): void
+    {
+        $formData = $this->form->getState();
+        $selectedTenant = $formData['selected_tenant'] ?? null;
+
+        if ($selectedTenant && config('eclipse-catalogue.tenancy.foreign_key')) {
+            $currentData = [
+                'is_active' => $formData['tenant_data'][$selectedTenant]['is_active'] ?? true,
+                'is_default' => $formData['tenant_data'][$selectedTenant]['is_default'] ?? false,
+                'is_default_purchase' => $formData['tenant_data'][$selectedTenant]['is_default_purchase'] ?? false,
+            ];
+
+            $allTenantData = $formData['all_tenant_data'] ?? [];
+            $allTenantData[$selectedTenant] = $currentData;
+
+            $this->form->fill(['all_tenant_data' => $allTenantData]);
+        }
+    }
+
+    /**
      * Validate default constraints before saving.
      */
     protected function validateDefaultConstraintsBeforeSave(): void
