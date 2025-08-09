@@ -3,6 +3,7 @@
 use Eclipse\Catalogue\Models\PriceList;
 use Eclipse\Catalogue\Models\PriceListData;
 use Eclipse\World\Models\Currency;
+use Workbench\App\Models\Site;
 
 beforeEach(function () {
     // Create test currencies
@@ -18,6 +19,22 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 });
+
+/**
+ * Helper: create a PriceListData row including the tenant foreign key when
+ * tenancy is enabled. Keeps the tests readable and future-proof.
+ */
+function createPriceListData(array $attributes): PriceListData
+{
+    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+    if ($tenantFK) {
+        $siteId = Site::first()?->id;
+        // Ensure we always include the tenant FK when required
+        $attributes[$tenantFK] = $attributes[$tenantFK] ?? $siteId;
+    }
+
+    return PriceListData::create($attributes);
+}
 
 // Access Control Tests
 test('unauthenticated users cannot access price list index', function () {
@@ -122,7 +139,7 @@ test('has currency relationship', function () {
 test('has price list data relationship', function () {
     $priceList = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList->id,
         'is_active' => true,
         'is_default' => false,
@@ -157,14 +174,14 @@ test('only one price list can be set as default selling per tenant', function ()
     $priceList2 = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
     // Create price list data for both as default selling
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList1->id,
         'is_active' => true,
         'is_default' => true,
         'is_default_purchase' => false,
     ]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList2->id,
         'is_active' => true,
         'is_default' => true,
@@ -188,14 +205,14 @@ test('only one price list can be set as default purchase per tenant', function (
     $priceList2 = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
     // Create price list data for both as default purchase
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList1->id,
         'is_active' => true,
         'is_default' => false,
         'is_default_purchase' => true,
     ]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList2->id,
         'is_active' => true,
         'is_default' => false,
@@ -216,14 +233,14 @@ test('can have separate default selling and purchase price lists', function () {
     $sellingPriceList = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
     $purchasePriceList = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $sellingPriceList->id,
         'is_active' => true,
         'is_default' => true,
         'is_default_purchase' => false,
     ]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $purchasePriceList->id,
         'is_active' => true,
         'is_default' => false,
@@ -243,7 +260,7 @@ test('price list data cannot be both default selling and purchase at the same ti
     $priceList = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
     // Create data that violates the business rule
-    $priceListData = PriceListData::create([
+    $priceListData = createPriceListData([
         'price_list_id' => $priceList->id,
         'is_active' => true,
         'is_default' => true,
@@ -259,7 +276,7 @@ test('price list data cannot be both default selling and purchase at the same ti
 test('get default selling price list works', function () {
     $priceList = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList->id,
         'is_active' => true,
         'is_default' => true,
@@ -275,7 +292,7 @@ test('get default selling price list works', function () {
 test('get default purchase price list works', function () {
     $priceList = PriceList::factory()->create(['currency_id' => 'USD', 'tax_included' => false]);
 
-    PriceListData::create([
+    createPriceListData([
         'price_list_id' => $priceList->id,
         'is_active' => true,
         'is_default' => false,
