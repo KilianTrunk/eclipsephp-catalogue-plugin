@@ -15,11 +15,13 @@ class CatalogueServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         $package->name(static::$name)
+            ->hasViews()
             ->hasConfigFile()
             ->hasTranslations()
             ->hasViews()
             ->discoversMigrations()
-            ->runsMigrations();
+            ->runsMigrations()
+            ->hasAssets();
     }
 
     public function register()
