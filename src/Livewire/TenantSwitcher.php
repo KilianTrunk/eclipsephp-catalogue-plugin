@@ -46,7 +46,7 @@ class TenantSwitcher extends LivewireComponent
     }
 
     /**
-     * Create a Filament form component for tenant switching
+     * Create a Filament Select component used within the form schema.
      */
     public static function make(string $fieldName = 'selected_tenant'): Component
     {
@@ -71,6 +71,36 @@ class TenantSwitcher extends LivewireComponent
             ->selectablePlaceholder(false)
             ->live()
             ->afterStateUpdated(function ($state, callable $set, callable $get, $livewire) {
+                // Get previous tenant from a tracking field
+                $previousTenant = $get('_previous_tenant');
+
+                // Store current tenant data before switching
+                if ($previousTenant && $previousTenant != $state) {
+                    // Get current tenant data
+                    $currentData = [
+                        'is_active' => $get("tenant_data.{$previousTenant}.is_active") ?? true,
+                        'is_default' => $get("tenant_data.{$previousTenant}.is_default") ?? false,
+                        'is_default_purchase' => $get("tenant_data.{$previousTenant}.is_default_purchase") ?? false,
+                    ];
+
+                    // Store it in a persistent field
+                    $allTenantData = $get('all_tenant_data') ?? [];
+                    $allTenantData[$previousTenant] = $currentData;
+                    $set('all_tenant_data', $allTenantData);
+                }
+
+                // Update the previous tenant tracker
+                $set('_previous_tenant', $state);
+
+                // Load data for new tenant
+                $allTenantData = $get('all_tenant_data') ?? [];
+                if (isset($allTenantData[$state])) {
+                    $tenantData = $allTenantData[$state];
+                    $set("tenant_data.{$state}.is_active", $tenantData['is_active'] ?? true);
+                    $set("tenant_data.{$state}.is_default", $tenantData['is_default'] ?? false);
+                    $set("tenant_data.{$state}.is_default_purchase", $tenantData['is_default_purchase'] ?? false);
+                }
+
                 // Trigger form update when tenant changes
                 $livewire->dispatch('tenant-changed', $state);
             })
@@ -78,7 +108,7 @@ class TenantSwitcher extends LivewireComponent
     }
 
     /**
-     * Create a tenant switcher with custom options
+     * Same as make(), but accepts additional Select options via a map.
      */
     public static function makeWithOptions(
         string $fieldName = 'selected_tenant',

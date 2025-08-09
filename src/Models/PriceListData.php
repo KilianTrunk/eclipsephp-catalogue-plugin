@@ -21,6 +21,9 @@ class PriceListData extends Model
         'is_default_purchase',
     ];
 
+    /**
+     * Include the tenant foreign key in fillable when tenancy is on.
+     */
     public function getFillable(): array
     {
         $fillable = $this->fillable;
@@ -32,6 +35,9 @@ class PriceListData extends Model
         return $fillable;
     }
 
+    /**
+     * Parent PriceList relation.
+     */
     public function priceList(): BelongsTo
     {
         return $this->belongsTo(PriceList::class);
@@ -43,6 +49,9 @@ class PriceListData extends Model
         return $this->belongsTo(\Eclipse\Core\Models\Site::class);
     }
 
+    /**
+     * Ensure boolean flags are cast properly.
+     */
     protected function casts(): array
     {
         return [

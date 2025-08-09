@@ -16,7 +16,7 @@ use Filament\Notifications\Notification;
 trait HasPriceListForm
 {
     /**
-     * Build the base form schema for price list pages
+     * Build the base form schema for price list pages.
      */
     protected function buildPriceListFormSchema(): array
     {
