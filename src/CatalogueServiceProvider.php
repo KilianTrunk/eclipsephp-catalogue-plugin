@@ -15,10 +15,13 @@ class CatalogueServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         $package->name(static::$name)
+            ->hasViews()
             ->hasConfigFile()
             ->hasTranslations()
+            ->hasViews()
             ->discoversMigrations()
-            ->runsMigrations();
+            ->runsMigrations()
+            ->hasAssets();
     }
 
     public function register()
@@ -33,5 +36,15 @@ class CatalogueServiceProvider extends PackageServiceProvider
         ];
 
         Config::set('scout.typesense.model-settings', $settings);
+    }
+
+    public function boot()
+    {
+        parent::boot();
+
+        // Register Livewire components
+        if (class_exists(\Livewire\Livewire::class)) {
+            \Livewire\Livewire::component('eclipse-catalogue::tenant-switcher', \Eclipse\Catalogue\Livewire\TenantSwitcher::class);
+        }
     }
 }
