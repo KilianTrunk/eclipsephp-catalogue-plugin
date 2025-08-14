@@ -4,7 +4,6 @@ namespace Eclipse\Catalogue\Seeders;
 
 use Eclipse\Catalogue\Models\PriceList;
 use Eclipse\Catalogue\Models\PriceListData;
-use Eclipse\World\Models\Currency;
 use Illuminate\Database\Seeder;
 
 class PriceListSeeder extends Seeder
@@ -14,11 +13,6 @@ class PriceListSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ensure we have at least one currency
-        if (Currency::count() === 0) {
-            Currency::create(['id' => 'EUR', 'name' => 'Euro', 'is_active' => true]);
-        }
-
         // Create price lists using factory
         $priceLists = PriceList::factory()
             ->count(3)
