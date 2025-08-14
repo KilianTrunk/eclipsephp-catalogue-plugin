@@ -28,6 +28,7 @@ class Product extends Model implements HasMedia
         'gross_weight',
         'name',
         'category_id',
+        'product_type_id',
         'short_description',
         'description',
     ];
@@ -44,11 +45,17 @@ class Product extends Model implements HasMedia
         'description' => 'array',
         'deleted_at' => 'datetime',
         'category_id' => 'integer',
+        'product_type_id' => 'integer',
     ];
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(ProductType::class, 'product_type_id');
     }
 
     protected static function newFactory(): ProductFactory
