@@ -11,15 +11,37 @@ class ProductTypeFactory extends Factory
 
     public function definition(): array
     {
+        $baseName = $this->faker->words(2, true);
+
+        $locales = $this->getAvailableLocales();
+
+        $translatedNames = [];
+        foreach ($locales as $locale) {
+            if ($locale === 'en') {
+                $translatedNames[$locale] = $baseName;
+            } else {
+                $translatedNames[$locale] = strtoupper($locale).': '.$baseName;
+            }
+        }
+
         return [
-            'name' => [
-                'en' => $this->faker->words(2, true),
-                'hr' => $this->faker->words(2, true),
-                'sl' => $this->faker->words(2, true),
-                'sr' => $this->faker->words(2, true),
-            ],
+            'name' => $translatedNames,
             'code' => $this->faker->unique()->regexify('[A-Z]{2}[0-9]{3}'),
         ];
+    }
+
+    /**
+     * Get available locales for the application.
+     */
+    protected function getAvailableLocales(): array
+    {
+        if (class_exists(\Eclipse\Core\Models\Locale::class)) {
+            return \Eclipse\Core\Models\Locale::getAvailableLocales()
+                ->pluck('id')
+                ->toArray();
+        }
+
+        return ['en'];
     }
 
     public function withName(string|array $name): static

@@ -6,10 +6,6 @@ return [
 
     'fields' => [
         'name' => 'Name',
-        'name_en' => 'Name (English)',
-        'name_hr' => 'Name (Croatian)',
-        'name_sl' => 'Name (Slovenian)',
-        'name_sr' => 'Name (Serbian)',
         'code' => 'Code',
         'is_active' => 'Active',
         'is_default' => 'Default Type',
@@ -28,10 +24,6 @@ return [
 
     'placeholders' => [
         'name' => 'Enter product type name',
-        'name_en' => 'Enter product type name in English',
-        'name_hr' => 'Enter product type name in Croatian',
-        'name_sl' => 'Enter product type name in Slovenian',
-        'name_sr' => 'Enter product type name in Serbian',
         'code' => 'Optional code for identification',
         'tenant' => 'Select tenant',
     ],

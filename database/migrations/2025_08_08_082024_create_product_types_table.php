@@ -17,6 +17,7 @@ return new class extends Migration
         });
 
         Schema::create('pim_product_type_data', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('product_type_id')
                 ->constrained('pim_product_types')
                 ->cascadeOnUpdate()

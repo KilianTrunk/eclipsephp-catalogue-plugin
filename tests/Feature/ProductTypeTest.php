@@ -247,9 +247,23 @@ test('name translations are properly cast', function () {
     expect($type->name)->toBeString();
 
     // getTranslations returns the full array of translations
-    expect($type->getTranslations('name'))->toBeArray();
-
-    // Should have all language keys
     $translations = $type->getTranslations('name');
-    expect($translations)->toHaveKeys(['en', 'hr', 'sl', 'sr']);
+    expect($translations)->toBeArray();
+
+    // Should have at least English translation
+    expect($translations)->toHaveKey('en');
+
+    // Should have translations for all available locales
+    if (class_exists(\Eclipse\Core\Models\Locale::class)) {
+        $availableLocales = \Eclipse\Core\Models\Locale::getAvailableLocales()
+            ->pluck('id')
+            ->toArray();
+
+        foreach ($availableLocales as $locale) {
+            expect($translations)->toHaveKey($locale);
+        }
+    } else {
+        // Fallback test when Locale model is not available
+        expect($translations)->toHaveKey('en');
+    }
 });

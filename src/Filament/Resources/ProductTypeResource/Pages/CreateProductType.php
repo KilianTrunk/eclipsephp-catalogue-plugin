@@ -7,9 +7,10 @@ use Eclipse\Catalogue\Models\ProductType;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasProductTypeForm;
 use Eclipse\Catalogue\Traits\HasTenantFields;
+use Filament\Actions\LocaleSwitcher;
 use Filament\Forms\Form;
-use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\CreateRecord\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 
 class CreateProductType extends CreateRecord
@@ -17,6 +18,13 @@ class CreateProductType extends CreateRecord
     use HandlesTenantData, HasProductTypeForm, HasTenantFields, Translatable;
 
     protected static string $resource = ProductTypeResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            LocaleSwitcher::make(),
+        ];
+    }
 
     protected function getFormTenantFlags(): array
     {

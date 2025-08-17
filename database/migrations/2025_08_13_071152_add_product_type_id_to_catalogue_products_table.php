@@ -14,7 +14,7 @@ return new class extends Migration
                 ->after('category_id')
                 ->constrained('pim_product_types')
                 ->cascadeOnUpdate()
-                ->nullOnDelete();
+                ->restrictOnDelete();
         });
     }
 

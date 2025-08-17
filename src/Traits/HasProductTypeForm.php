@@ -21,27 +21,11 @@ trait HasProductTypeForm
                 ->schema([
                     Grid::make(2)
                         ->schema([
-                            // Multi-language name inputs
-                            TextInput::make('name.en')
-                                ->label(__('eclipse-catalogue::product-type.fields.name_en'))
+                            TextInput::make('name')
+                                ->label(__('eclipse-catalogue::product-type.fields.name'))
                                 ->required()
                                 ->maxLength(255)
-                                ->placeholder(__('eclipse-catalogue::product-type.placeholders.name_en')),
-
-                            TextInput::make('name.hr')
-                                ->label(__('eclipse-catalogue::product-type.fields.name_hr'))
-                                ->maxLength(255)
-                                ->placeholder(__('eclipse-catalogue::product-type.placeholders.name_hr')),
-
-                            TextInput::make('name.sl')
-                                ->label(__('eclipse-catalogue::product-type.fields.name_sl'))
-                                ->maxLength(255)
-                                ->placeholder(__('eclipse-catalogue::product-type.placeholders.name_sl')),
-
-                            TextInput::make('name.sr')
-                                ->label(__('eclipse-catalogue::product-type.fields.name_sr'))
-                                ->maxLength(255)
-                                ->placeholder(__('eclipse-catalogue::product-type.placeholders.name_sr')),
+                                ->placeholder(__('eclipse-catalogue::product-type.placeholders.name')),
 
                             TextInput::make('code')
                                 ->label(__('eclipse-catalogue::product-type.fields.code'))

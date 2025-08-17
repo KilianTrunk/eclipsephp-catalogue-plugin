@@ -8,10 +8,11 @@ use Eclipse\Catalogue\Traits\HasProductTypeForm;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\LocaleSwitcher;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Form;
-use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\EditRecord\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 
 class EditProductType extends EditRecord
@@ -33,6 +34,7 @@ class EditProductType extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            LocaleSwitcher::make(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),
