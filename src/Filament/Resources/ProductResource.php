@@ -5,12 +5,13 @@ namespace Eclipse\Catalogue\Filament\Resources;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
-use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
+use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Eclipse\World\Models\Country;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -41,7 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductResource extends Resource implements HasShieldPermissions
 {
-    use HandlesTenantData, HasTenantFields, Translatable;
+    use Translatable, HandlesTenantData, HasTenantFields;
 
     protected static ?string $model = Product::class;
 
@@ -163,19 +164,8 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     ])
                                     ->collapsible()
                                     ->persistCollapsed(),
-                            ]),
 
-                        Tabs\Tab::make('Images')
-                            ->schema([
-                                ImageManager::make('images')
-                                    ->label('')
-                                    ->collection('images')
-                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-                                    ->columnSpanFull(),
-                            ]),
-
-                        Tabs\Tab::make(__('eclipse-catalogue::product.sections.tenant_settings'))
-                            ->schema([
+                                // Tenant settings (embedded in General tab)
                                 GenericTenantFieldsComponent::make(
                                     tenantFlags: ['is_active', 'has_free_delivery'],
                                     mutuallyExclusiveFlagSets: [],
@@ -192,8 +182,16 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     sectionTitle: __('eclipse-catalogue::product.sections.tenant_settings'),
                                     sectionDescription: __('eclipse-catalogue::product.sections.tenant_settings_description'),
                                 ),
-                            ])
-                            ->hidden(fn () => ! (bool) config('eclipse-catalogue.tenancy.foreign_key')),
+                            ]),
+
+                        Tabs\Tab::make('Images')
+                            ->schema([
+                                ImageManager::make('images')
+                                    ->label('')
+                                    ->collection('images')
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                                    ->columnSpanFull(),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ]);

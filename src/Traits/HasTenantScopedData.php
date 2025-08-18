@@ -118,6 +118,27 @@ trait HasTenantScopedData
     }
 
     /**
+     * Filter a tenant data payload to keys allowed by the model's configuration and the data model's fillable.
+     */
+    protected function filterTenantDataForPersistence(array $tenantData): array
+    {
+        $tenantFlags = $this->getTenantFlags();
+        $tenantAttrs = $this->getTenantAttributes();
+        $allowedKeys = array_flip(array_merge($tenantFlags, $tenantAttrs));
+
+        // First pass: only keep allowed logical keys
+        $filtered = array_intersect_key($tenantData, $allowedKeys);
+
+        // Second pass: ensure only fillable keys for data model persist
+        $dataModelClass = $this->getTenantDataModelClass();
+        /** @var \Illuminate\Database\Eloquent\Model $dataModel */
+        $dataModel = new $dataModelClass();
+        $fillable = array_flip($dataModel->getFillable());
+
+        return array_intersect_key($filtered, $fillable);
+    }
+
+    /**
      * Get the per-tenant data for the current Filament tenant (if any).
      * Falls back to the first data row when tenancy is disabled.
      */
@@ -172,9 +193,8 @@ trait HasTenantScopedData
         }
 
         $tenantData = $this->currentTenantData();
-        $default = in_array($flag, ['is_active']) ? true : false;
 
-        return $tenantData ? $tenantData->$flag : $default;
+        return $tenantData ? (bool) $tenantData->$flag : false;
     }
 
     /**
@@ -201,8 +221,8 @@ trait HasTenantScopedData
                 }
             }
 
-            // Filter to allowed keys only
-            $singleTenantData = array_intersect_key($singleTenantData, array_flip($allowedKeys));
+            // Filter to allowed keys only and respect data model fillable
+            $singleTenantData = $model->filterTenantDataForPersistence($singleTenantData);
 
             // Enforce invariants
             $model->handleDefaultConstraints($singleTenantData, null);
@@ -238,8 +258,8 @@ trait HasTenantScopedData
                 }
             }
 
-            // Filter to allowed keys only
-            $tenantSpecificData = array_intersect_key($tenantSpecificData, array_flip($allowedKeys));
+            // Filter to allowed keys only and respect data model fillable
+            $tenantSpecificData = $model->filterTenantDataForPersistence($tenantSpecificData);
 
             // Enforce invariants for this tenant
             $model->handleDefaultConstraints($tenantSpecificData, $tenantId);
@@ -277,6 +297,9 @@ trait HasTenantScopedData
                 $dataModelClass = static::$tenantDataModel;
                 $relationKey = $this->getTenantDataRelation()->getForeignKeyName();
 
+                // Filter again to respect data model fillable
+                $tenantData = $this->filterTenantDataForPersistence($tenantData);
+
                 $dataModelClass::updateOrCreate(
                     [$relationKey => $this->id],
                     $tenantData
@@ -306,6 +329,9 @@ trait HasTenantScopedData
 
             $dataModelClass = $this->getTenantDataModelClass();
             $relationKey = $this->getTenantDataRelation()->getForeignKeyName();
+
+            // Filter again to respect data model fillable
+            $tenantSpecificData = $this->filterTenantDataForPersistence($tenantSpecificData);
 
             $dataModelClass::updateOrCreate(
                 [
