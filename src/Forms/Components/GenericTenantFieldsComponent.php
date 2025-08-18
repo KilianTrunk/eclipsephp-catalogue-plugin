@@ -9,6 +9,15 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Toggle;
 
+/**
+ * Generic per-tenant fields builder for Filament forms.
+ *
+ * Usage:
+ * - Call GenericTenantFieldsComponent::make(...) within a Resource form schema to embed
+ *   tenant-aware inputs (flags and optional extra fields) for each tenant.
+ * - The component renders a tenant selector and a hidden all_tenant_data field that stores
+ *   each tenant's sub-state so switching tenants does not lose edits.
+ */
 class GenericTenantFieldsComponent
 {
     /**
@@ -97,16 +106,41 @@ class GenericTenantFieldsComponent
                 }
             }
 
+            // Persist current tenant's data into all_tenant_data whenever a flag changes
+            $toggle = $toggle->afterStateUpdated(function ($state, callable $set, callable $get) use ($tenantId) {
+                $currentData = $get("tenant_data.{$tenantId}") ?? [];
+                $allTenantData = $get('all_tenant_data') ?? [];
+                $allTenantData[$tenantId] = $currentData;
+                $set('all_tenant_data', $allTenantData);
+            });
+
             $schema[] = $toggle;
         }
 
-        // Extra fields per tenant (e.g., sorting_label, available_from_date)
+        // Extra fields per tenant
         if ($extraFieldsBuilder) {
             $extra = $extraFieldsBuilder($tenantId, $tenantName);
             if (is_array($extra)) {
+                // For extra fields, also persist on change if supported
+                $enhancedExtra = [];
+                foreach ($extra as $component) {
+                    // Ensure extra components push state immediately while editing
+                    if (method_exists($component, 'live')) {
+                        $component = $component->live();
+                    }
+                    if (method_exists($component, 'afterStateUpdated')) {
+                        $component = $component->afterStateUpdated(function ($state, callable $set, callable $get) use ($tenantId) {
+                            $currentData = $get("tenant_data.{$tenantId}") ?? [];
+                            $allTenantData = $get('all_tenant_data') ?? [];
+                            $allTenantData[$tenantId] = $currentData;
+                            $set('all_tenant_data', $allTenantData);
+                        });
+                    }
+                    $enhancedExtra[] = $component;
+                }
                 $schema = [
                     ...$schema,
-                    ...$extra,
+                    ...$enhancedExtra,
                 ];
             }
         }

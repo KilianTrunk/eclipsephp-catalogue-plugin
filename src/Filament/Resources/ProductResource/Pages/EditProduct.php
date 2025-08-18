@@ -50,6 +50,19 @@ class EditProduct extends EditRecord
         return $form;
     }
 
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->action(function () {
+                    $this->storeCurrentTenantData();
+                    $this->validateDefaultConstraintsBeforeSave();
+                    $this->save();
+                }),
+            $this->getCancelFormAction(),
+        ];
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
