@@ -8,9 +8,10 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('catalogue_products', function (Blueprint $table) {
-            $table->foreignId('origin_country_id')
-                ->nullable()
-                ->constrained('world_countries')
+            $table->string('origin_country_id', 2)->nullable();
+            $table->foreign('origin_country_id')
+                ->references('id')
+                ->on('world_countries')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
             $table->text('meta_description')
@@ -23,7 +24,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('catalogue_products', function (Blueprint $table) {
-            $table->dropForeign('origin_country_id');
+            $table->dropForeign(['origin_country_id']);
             $table->dropColumn([
                 'origin_country_id',
                 'meta_description',
