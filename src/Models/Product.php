@@ -99,6 +99,14 @@ class Product extends Model implements HasMedia
         return $this->hasMany(ProductData::class, 'product_id');
     }
 
+    /**
+     * Prices relationship.
+     */
+    public function prices(): HasMany
+    {
+        return $this->hasMany(\Eclipse\Catalogue\Models\Product\Price::class);
+    }
+
     public function getIsActiveAttribute(): bool
     {
         return $this->getTenantFlagValue('is_active');

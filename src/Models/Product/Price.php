@@ -9,7 +9,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Price extends Model
 {
-    protected $table = 'catalog_product_prices';
+    protected $table = 'catalogue_product_prices';
+
+    protected $fillable = [
+        'id',
+        'product_id',
+        'price_list_id',
+        'valid_from',
+        'valid_to',
+        'price',
+        'tax_included',
+    ];
 
     public function product(): BelongsTo
     {
