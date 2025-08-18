@@ -102,6 +102,22 @@ trait HasTenantScopedData
     }
 
     /**
+     * Get additional per-tenant attributes (non-boolean flags) from the model.
+     */
+    protected function getTenantAttributes(): array
+    {
+        $reflection = new \ReflectionClass(static::class);
+        if ($reflection->hasProperty('tenantAttributes')) {
+            $property = $reflection->getProperty('tenantAttributes');
+            $property->setAccessible(true);
+
+            return $property->getValue() ?? [];
+        }
+
+        return [];
+    }
+
+    /**
      * Get the per-tenant data for the current Filament tenant (if any).
      * Falls back to the first data row when tenancy is disabled.
      */
@@ -174,6 +190,8 @@ trait HasTenantScopedData
         if (! $tenantFK) {
             // No tenancy: create a single data row with provided or default flags
             $tenantFlags = $model->getTenantFlags();
+            $tenantAttrs = $model->getTenantAttributes();
+            $allowedKeys = array_merge($tenantFlags, $tenantAttrs);
             $singleTenantData = $tenantData ?: array_fill_keys($tenantFlags, true);
 
             // Set defaults for specific flags
@@ -182,6 +200,9 @@ trait HasTenantScopedData
                     $singleTenantData[$flag] = in_array($flag, ['is_active']) ? true : false;
                 }
             }
+
+            // Filter to allowed keys only
+            $singleTenantData = array_intersect_key($singleTenantData, array_flip($allowedKeys));
 
             // Enforce invariants
             $model->handleDefaultConstraints($singleTenantData, null);
@@ -206,6 +227,8 @@ trait HasTenantScopedData
 
             // Use provided data if available; otherwise apply safe defaults
             $tenantFlags = $model->getTenantFlags();
+            $tenantAttrs = $model->getTenantAttributes();
+            $allowedKeys = array_merge($tenantFlags, $tenantAttrs);
             $tenantSpecificData = $tenantData[$tenantId] ?? array_fill_keys($tenantFlags, false);
 
             // Set defaults for specific flags
@@ -214,6 +237,9 @@ trait HasTenantScopedData
                     $tenantSpecificData[$flag] = in_array($flag, ['is_active']) ? true : false;
                 }
             }
+
+            // Filter to allowed keys only
+            $tenantSpecificData = array_intersect_key($tenantSpecificData, array_flip($allowedKeys));
 
             // Enforce invariants for this tenant
             $model->handleDefaultConstraints($tenantSpecificData, $tenantId);

@@ -2,9 +2,10 @@
 
 namespace Eclipse\Catalogue\Models;
 
-use Eclipse\Catalogue\Traits\HasTenantScopedData;
 use Eclipse\Catalogue\Factories\ProductFactory;
+use Eclipse\Catalogue\Traits\HasTenantScopedData;
 use Eclipse\Common\Foundation\Models\IsSearchable;
+use Eclipse\World\Models\Country;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,11 +15,10 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
-use Eclipse\World\Models\Country;
 
 class Product extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, InteractsWithMedia, IsSearchable, SoftDeletes, HasTenantScopedData;
+    use HasFactory, HasTenantScopedData, HasTranslations, InteractsWithMedia, IsSearchable, SoftDeletes;
 
     protected $table = 'catalogue_products';
 
@@ -73,6 +73,8 @@ class Product extends Model implements HasMedia
     protected static array $mutuallyExclusiveFlagSets = [];
 
     protected static array $uniqueFlagsPerTenant = [];
+
+    protected static array $tenantAttributes = ['sorting_label', 'available_from_date'];
 
     public function category(): BelongsTo
     {

@@ -17,8 +17,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class EditProduct extends EditRecord
 {
     use EditRecord\Concerns\Translatable;
-    use WithRecordNavigation;
     use HandlesTenantData, HasTenantFields;
+    use WithRecordNavigation;
 
     protected static string $resource = ProductResource::class;
 

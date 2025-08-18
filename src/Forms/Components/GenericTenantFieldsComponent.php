@@ -7,7 +7,6 @@ use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 
 class GenericTenantFieldsComponent
@@ -15,10 +14,10 @@ class GenericTenantFieldsComponent
     /**
      * Build a generic tenant fields section that can render arbitrary flags and fields per tenant.
      *
-     * @param array $tenantFlags List of boolean flag field names
-     * @param array $mutuallyExclusiveFlagSets Array of arrays of flags that are mutually exclusive
-     * @param string $translationPrefix Base translation namespace (expects .fields.* and .help_text.* keys)
-     * @param callable|null $extraFieldsBuilder function(int $tenantId, string $tenantName): array of extra Filament fields
+     * @param  array  $tenantFlags  List of boolean flag field names
+     * @param  array  $mutuallyExclusiveFlagSets  Array of arrays of flags that are mutually exclusive
+     * @param  string  $translationPrefix  Base translation namespace (expects .fields.* and .help_text.* keys)
+     * @param  callable|null  $extraFieldsBuilder  function(int $tenantId, string $tenantName): array of extra Filament fields
      */
     public static function make(
         array $tenantFlags,
@@ -119,5 +118,3 @@ class GenericTenantFieldsComponent
         ];
     }
 }
-
-
