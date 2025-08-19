@@ -99,6 +99,31 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->searchable()
                                             ->placeholder('Category (optional)'),
 
+                                        Select::make('product_type_id')
+                                            ->label(__('eclipse-catalogue::product.fields.product_type'))
+                                            ->relationship(
+                                                'type',
+                                                'name',
+                                                function ($query) {
+                                                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                                                    $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                                                    if ($tenantFK && $currentTenant) {
+                                                        return $query->whereHas('productTypeData', function ($q) use ($tenantFK, $currentTenant) {
+                                                            $q->where($tenantFK, $currentTenant->id)
+                                                                ->where('is_active', true);
+                                                        });
+                                                    }
+
+                                                    return $query->whereHas('productTypeData', function ($q) {
+                                                        $q->where('is_active', true);
+                                                    });
+                                                }
+                                            )
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.product_type')),
+
                                         TextInput::make('short_description'),
 
                                         RichEditor::make('description')
@@ -178,6 +203,9 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                 TextColumn::make('category.name'),
 
+                TextColumn::make('type.name')
+                    ->label(__('eclipse-catalogue::product.table.columns.type')),
+
                 TextColumn::make('short_description')
                     ->words(5),
 
@@ -205,6 +233,28 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label('Categories')
                     ->multiple()
                     ->options(Category::getHierarchicalOptions()),
+                SelectFilter::make('product_type_id')
+                    ->label(__('eclipse-catalogue::product.filters.product_type'))
+                    ->multiple()
+                    ->options(function () {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $query = \Eclipse\Catalogue\Models\ProductType::query();
+
+                        if ($tenantFK && $currentTenant) {
+                            $query->whereHas('productTypeData', function ($q) use ($tenantFK, $currentTenant) {
+                                $q->where($tenantFK, $currentTenant->id)
+                                    ->where('is_active', true);
+                            });
+                        } else {
+                            $query->whereHas('productTypeData', function ($q) {
+                                $q->where('is_active', true);
+                            });
+                        }
+
+                        return $query->pluck('name', 'id')->toArray();
+                    }),
             ])
             ->actions([
                 ActionGroup::make([
