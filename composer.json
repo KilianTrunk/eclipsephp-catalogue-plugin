@@ -82,6 +82,7 @@
             "@php vendor/bin/testbench serve --ansi"
         ],
         "setup": [
+            "npm install",
             "@php vendor/bin/testbench vendor:publish --provider='Spatie\\Permission\\PermissionServiceProvider'",
             "@php vendor/bin/testbench vendor:publish --tag='filament-shield-config'",
             "@php vendor/bin/testbench vendor:publish --provider='Laravel\\Scout\\ScoutServiceProvider'",
