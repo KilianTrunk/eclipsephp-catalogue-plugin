@@ -2,7 +2,9 @@
 
 namespace Eclipse\Catalogue\Seeders;
 
+use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
+use Eclipse\Catalogue\Models\ProductData;
 use Eclipse\Catalogue\Models\ProductType;
 use Exception;
 use Illuminate\Database\Seeder;
@@ -25,6 +27,41 @@ class ProductSeeder extends Seeder
                     return $productTypes->random()->id;
                 },
             ]);
+
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        $tenantModel = config('eclipse-catalogue.tenancy.model');
+
+        $products = Product::query()->latest('id')->take(100)->get();
+
+        foreach ($products as $product) {
+            if ($tenantFK && $tenantModel && class_exists($tenantModel)) {
+                $tenants = $tenantModel::all();
+                foreach ($tenants as $tenant) {
+                    $categoryId = Category::query()
+                        ->withoutGlobalScopes()
+                        ->where($tenantFK, $tenant->id)
+                        ->inRandomOrder()
+                        ->value('id');
+
+                    ProductData::factory()->create([
+                        'product_id' => $product->id,
+                        $tenantFK => $tenant->id,
+                        'is_active' => true,
+                        'has_free_delivery' => false,
+                        'category_id' => $categoryId,
+                    ]);
+                }
+            } else {
+                $categoryId = Category::query()->inRandomOrder()->value('id');
+
+                ProductData::factory()->create([
+                    'product_id' => $product->id,
+                    'is_active' => true,
+                    'has_free_delivery' => false,
+                    'category_id' => $categoryId,
+                ]);
+            }
+        }
     }
 
     private function ensureSampleImagesExist(): void

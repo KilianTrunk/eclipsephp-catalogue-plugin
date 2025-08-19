@@ -30,7 +30,6 @@ class Product extends Model implements HasMedia
         'net_weight',
         'gross_weight',
         'name',
-        'category_id',
         'product_type_id',
         'short_description',
         'description',
@@ -50,7 +49,6 @@ class Product extends Model implements HasMedia
         'short_description' => 'array',
         'description' => 'array',
         'deleted_at' => 'datetime',
-        'category_id' => 'integer',
         'product_type_id' => 'integer',
         'available_from_date' => 'datetime',
         'is_active' => 'boolean',
@@ -74,11 +72,11 @@ class Product extends Model implements HasMedia
 
     protected static array $uniqueFlagsPerTenant = [];
 
-    protected static array $tenantAttributes = ['sorting_label', 'available_from_date'];
+    protected static array $tenantAttributes = ['sorting_label', 'available_from_date', 'category_id'];
 
-    public function category(): BelongsTo
+    public function category(): ?Category
     {
-        return $this->belongsTo(Category::class);
+        return $this->currentTenantData()?->category;
     }
 
     public function type(): BelongsTo

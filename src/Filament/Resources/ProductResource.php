@@ -96,14 +96,6 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->required()
                                             ->maxLength(255),
 
-                                        TextInput::make('short_description')
-                                            ->maxLength(500),
-                                        Select::make('category_id')
-                                            ->label('Category')
-                                            ->options(Category::getHierarchicalOptions())
-                                            ->searchable()
-                                            ->placeholder('Category (optional)'),
-
                                         Select::make('product_type_id')
                                             ->label(__('eclipse-catalogue::product.fields.product_type'))
                                             ->relationship(
@@ -129,7 +121,8 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->preload()
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.product_type')),
 
-                                        TextInput::make('short_description'),
+                                        RichEditor::make('short_description')
+                                            ->columnSpanFull(),
 
                                         RichEditor::make('description')
                                             ->columnSpanFull(),
@@ -171,6 +164,19 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     translationPrefix: 'eclipse-catalogue::product',
                                     extraFieldsBuilder: function (int $tenantId, string $tenantName) {
                                         return [
+                                            Select::make("tenant_data.{$tenantId}.category_id")
+                                                ->label(__('eclipse-catalogue::product.fields.category_id'))
+                                                ->options(function () use ($tenantId) {
+                                                    return Category::query()
+                                                        ->withoutGlobalScopes()
+                                                        ->where(config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
+                                                        ->orderBy('name')
+                                                        ->pluck('name', 'id')
+                                                        ->toArray();
+                                                })
+                                                ->searchable()
+                                                ->preload()
+                                                ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
                                             TextInput::make("tenant_data.{$tenantId}.sorting_label")
                                                 ->label(__('eclipse-catalogue::product.fields.sorting_label'))
                                                 ->maxLength(255),
@@ -240,7 +246,16 @@ class ProductResource extends Resource implements HasShieldPermissions
                 TextColumn::make('name')
                     ->toggleable(false),
 
-                TextColumn::make('category.name'),
+                TextColumn::make('category')
+                    ->label('Category')
+                    ->getStateUsing(function (Product $record) {
+                        $category = $record->currentTenantData()?->category;
+                        if (! $category) {
+                            return null;
+                        }
+
+                        return is_array($category->name) ? ($category->name[app()->getLocale()] ?? reset($category->name)) : $category->name;
+                    }),
 
                 TextColumn::make('type.name')
                     ->label(__('eclipse-catalogue::product.table.columns.type')),
@@ -278,7 +293,21 @@ class ProductResource extends Resource implements HasShieldPermissions
                 SelectFilter::make('category_id')
                     ->label('Categories')
                     ->multiple()
-                    ->options(Category::getHierarchicalOptions()),
+                    ->options(Category::getHierarchicalOptions())
+                    ->query(function (Builder $query, array $data) {
+                        $selected = $data['values'] ?? ($data['value'] ?? null);
+                        if (empty($selected)) {
+                            return;
+                        }
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        $query->whereHas('productData', function ($q) use ($selected, $tenantFK, $currentTenant) {
+                            if ($tenantFK && $currentTenant) {
+                                $q->where($tenantFK, $currentTenant->id);
+                            }
+                            $q->whereIn('category_id', (array) $selected);
+                        });
+                    }),
                 SelectFilter::make('product_type_id')
                     ->label(__('eclipse-catalogue::product.filters.product_type'))
                     ->multiple()

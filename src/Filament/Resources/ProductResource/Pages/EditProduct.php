@@ -74,6 +74,7 @@ class EditProduct extends EditRecord
                 $data['has_free_delivery'] = $recordData->has_free_delivery;
                 $data['available_from_date'] = $recordData->available_from_date;
                 $data['sorting_label'] = $recordData->sorting_label;
+                $data['category_id'] = $recordData->category_id ?? null;
             }
 
             return $data;
@@ -89,6 +90,7 @@ class EditProduct extends EditRecord
                 'has_free_delivery' => $tenantRecord->has_free_delivery,
                 'available_from_date' => $tenantRecord->available_from_date,
                 'sorting_label' => $tenantRecord->sorting_label,
+                'category_id' => $tenantRecord->category_id ?? null,
             ];
         }
 

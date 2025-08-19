@@ -3,6 +3,7 @@
 use Eclipse\Catalogue\Filament\Resources\ProductResource;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
+use Eclipse\Catalogue\Models\ProductData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -18,17 +19,30 @@ it('can filter products by category in table', function (): void {
 
     $laptop = Product::factory()->create([
         'name' => 'Gaming Laptop',
-        'category_id' => $electronics->id,
     ]);
-
     $novel = Product::factory()->create([
         'name' => 'Science Fiction Novel',
-        'category_id' => $books->id,
     ]);
-
     $orphanProduct = Product::factory()->create([
         'name' => 'No Category Product',
-        'category_id' => null,
+    ]);
+
+    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+    $tenantModel = config('eclipse-catalogue.tenancy.model');
+    $currentTenantId = $tenantModel::first()->id;
+
+    ProductData::factory()->create([
+        'product_id' => $laptop->id,
+        $tenantFK => $currentTenantId,
+        'category_id' => $electronics->id,
+        'is_active' => true,
+    ]);
+
+    ProductData::factory()->create([
+        'product_id' => $novel->id,
+        $tenantFK => $currentTenantId,
+        'category_id' => $books->id,
+        'is_active' => true,
     ]);
 
     Livewire::test(ProductResource\Pages\ListProducts::class)
