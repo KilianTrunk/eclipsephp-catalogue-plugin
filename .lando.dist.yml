@@ -1,4 +1,4 @@
-#file: noinspection ComposeUnknownKeys
+#file: noinspection ComposeUnknownKeys,YAMLSchemaValidation
 name: eclipse-catalogue
 services:
   appserver:
@@ -6,7 +6,7 @@ services:
     xdebug: "debug,develop,coverage"
     via: cli
     overrides:
-      image: slimdeluxe/php:8.2-v1.1
+      image: slimdeluxe/php:8.2-v1.3
 tooling:
   php:
     service: appserver
