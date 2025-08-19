@@ -129,6 +129,31 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->preload()
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.product_type')),
 
+                                        Select::make('product_type_id')
+                                            ->label(__('eclipse-catalogue::product.fields.product_type'))
+                                            ->relationship(
+                                                'type',
+                                                'name',
+                                                function ($query) {
+                                                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                                                    $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                                                    if ($tenantFK && $currentTenant) {
+                                                        return $query->whereHas('productTypeData', function ($q) use ($tenantFK, $currentTenant) {
+                                                            $q->where($tenantFK, $currentTenant->id)
+                                                                ->where('is_active', true);
+                                                        });
+                                                    }
+
+                                                    return $query->whereHas('productTypeData', function ($q) {
+                                                        $q->where('is_active', true);
+                                                    });
+                                                }
+                                            )
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.product_type')),
+
                                         TextInput::make('short_description'),
 
                                         RichEditor::make('description')
