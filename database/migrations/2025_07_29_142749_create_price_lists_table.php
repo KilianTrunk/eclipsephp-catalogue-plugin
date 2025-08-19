@@ -4,19 +4,31 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+return new class extends Migration
+{
     public function up(): void
     {
-        Schema::create('pim_product_types', function (Blueprint $table) {
+        Schema::create('pim_price_lists', function (Blueprint $table) {
             $table->id();
+            $table->string('currency_id', 3);
+            $table->foreign('currency_id')
+                ->references('id')
+                ->on('world_currencies')
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
+            $table->boolean('tax_included');
+            $table->string('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
-        Schema::create('pim_product_type_data', function (Blueprint $table) {
-            $table->foreignId('product_type_id')
-                ->constrained('pim_product_types')
+        // More price list data, optionally in tenant-scope
+        Schema::create('pim_price_list_data', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('price_list_id')
+                ->constrained('pim_price_lists')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
@@ -33,12 +45,13 @@ use Illuminate\Support\Facades\Schema;
 
             $table->boolean('is_active')->default(true);
             $table->boolean('is_default')->default(false);
+            $table->boolean('is_default_purchase')->default(false);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('pim_product_type_data');
-        Schema::dropIfExists('pim_product_types');
+        Schema::dropIfExists('pim_price_list_data');
+        Schema::dropIfExists('pim_price_lists');
     }
 };
