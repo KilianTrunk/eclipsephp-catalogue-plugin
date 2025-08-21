@@ -48,7 +48,7 @@ class EditProduct extends EditRecord
             foreach ($properties as $property) {
                 $fieldName = "property_values_{$property->id}";
                 $selectedValues = $this->record->propertyValues()
-                    ->where('property_id', $property->id)
+                    ->where('pim_property_value.property_id', $property->id)
                     ->pluck('pim_property_value.id')
                     ->toArray();
 
@@ -65,35 +65,36 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Extract property values from form data
-        $propertyData = [];
-        foreach ($data as $key => $value) {
+        foreach (array_keys($data) as $key) {
             if (str_starts_with($key, 'property_values_')) {
-                $propertyId = str_replace('property_values_', '', $key);
-                $propertyData[$propertyId] = $value;
                 unset($data[$key]);
             }
         }
-
-        // Store property data for later use in afterSave
-        $this->propertyData = $propertyData;
 
         return $data;
     }
 
     protected function afterSave(): void
     {
-        // Save property values
-        if (isset($this->propertyData) && $this->record) {
-            foreach ($this->propertyData as $propertyId => $values) {
-                // Remove existing values for this property
-                $this->record->propertyValues()
-                    ->wherePivot('property_value_id', 'IN', function ($query) use ($propertyId) {
-                        $query->select('id')
-                            ->from('pim_property_value')
-                            ->where('property_id', $propertyId);
-                    })
-                    ->detach();
+        if ($this->record) {
+            $state = $this->form->getRawState();
+            $propertyData = [];
+            foreach ($state as $key => $value) {
+                if (is_string($key) && str_starts_with($key, 'property_values_')) {
+                    $propertyId = str_replace('property_values_', '', $key);
+                    $propertyData[$propertyId] = $value;
+                }
+            }
+
+            foreach ($propertyData as $propertyId => $values) {
+                $idsToDetach = \Eclipse\Catalogue\Models\PropertyValue::query()
+                    ->where('property_id', $propertyId)
+                    ->pluck('id')
+                    ->all();
+
+                if (! empty($idsToDetach)) {
+                    $this->record->propertyValues()->detach($idsToDetach);
+                }
 
                 // Add new values
                 if ($values) {
