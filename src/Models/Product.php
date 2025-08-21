@@ -7,6 +7,7 @@ use Eclipse\Common\Foundation\Models\IsSearchable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -56,6 +57,12 @@ class Product extends Model implements HasMedia
     public function type(): BelongsTo
     {
         return $this->belongsTo(ProductType::class, 'product_type_id');
+    }
+
+    public function propertyValues(): BelongsToMany
+    {
+        return $this->belongsToMany(PropertyValue::class, 'catalogue_product_has_property_value', 'product_id', 'property_value_id')
+            ->withTimestamps();
     }
 
     protected static function newFactory(): ProductFactory

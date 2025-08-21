@@ -3,6 +3,7 @@
 namespace Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 
 use Eclipse\Catalogue\Filament\Resources\ProductResource;
+use Eclipse\Catalogue\Models\Property;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,82 @@ class EditProduct extends EditRecord
             Actions\ForceDeleteAction::make(),
             Actions\RestoreAction::make(),
         ];
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Load property values for the product
+        if ($this->record && $this->record->product_type_id) {
+            $properties = Property::where('is_active', true)
+                ->where(function ($query) {
+                    $query->where('is_global', true)
+                        ->orWhereHas('productTypes', function ($q) {
+                            $q->where('pim_product_types.id', $this->record->product_type_id);
+                        });
+                })
+                ->get();
+
+            foreach ($properties as $property) {
+                $fieldName = "property_values_{$property->id}";
+                $selectedValues = $this->record->propertyValues()
+                    ->where('property_id', $property->id)
+                    ->pluck('pim_property_value.id')
+                    ->toArray();
+
+                if ($property->max_values === 1) {
+                    $data[$fieldName] = $selectedValues[0] ?? null;
+                } else {
+                    $data[$fieldName] = $selectedValues;
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Extract property values from form data
+        $propertyData = [];
+        foreach ($data as $key => $value) {
+            if (str_starts_with($key, 'property_values_')) {
+                $propertyId = str_replace('property_values_', '', $key);
+                $propertyData[$propertyId] = $value;
+                unset($data[$key]);
+            }
+        }
+
+        // Store property data for later use in afterSave
+        $this->propertyData = $propertyData;
+
+        return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        // Save property values
+        if (isset($this->propertyData) && $this->record) {
+            foreach ($this->propertyData as $propertyId => $values) {
+                // Remove existing values for this property
+                $this->record->propertyValues()
+                    ->wherePivot('property_value_id', 'IN', function ($query) use ($propertyId) {
+                        $query->select('id')
+                            ->from('pim_property_value')
+                            ->where('property_id', $propertyId);
+                    })
+                    ->detach();
+
+                // Add new values
+                if ($values) {
+                    $valuesToAttach = is_array($values) ? $values : [$values];
+                    $valuesToAttach = array_filter($valuesToAttach); // Remove null values
+
+                    if (! empty($valuesToAttach)) {
+                        $this->record->propertyValues()->attach($valuesToAttach);
+                    }
+                }
+            }
+        }
     }
 
     /**

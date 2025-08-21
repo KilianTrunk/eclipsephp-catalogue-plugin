@@ -7,13 +7,17 @@ use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
+use Eclipse\Catalogue\Models\Property;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\ActionGroup;
@@ -142,6 +146,93 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     ])
                                     ->columns(2)
                                     ->hidden(fn (?Product $record) => $record === null),
+                            ]),
+
+                        Tabs\Tab::make('Properties')
+                            ->schema([
+                                Section::make('Product Properties')
+                                    ->description('Select values for properties applicable to this product type')
+                                    ->schema(function (Get $get, ?Product $record) {
+                                        $productTypeId = $get('product_type_id') ?? $record?->product_type_id;
+
+                                        if (! $productTypeId) {
+                                            return [
+                                                Placeholder::make('no_type')
+                                                    ->label('')
+                                                    ->content('Please select a product type first to see available properties.'),
+                                            ];
+                                        }
+
+                                        $properties = Property::where('is_active', true)
+                                            ->where(function ($query) use ($productTypeId) {
+                                                $query->where('is_global', true)
+                                                    ->orWhereHas('productTypes', function ($q) use ($productTypeId) {
+                                                        $q->where('pim_product_types.id', $productTypeId);
+                                                    });
+                                            })
+                                            ->with(['values' => function ($query) {
+                                                $query->orderBy('sort');
+                                            }])
+                                            ->get();
+
+                                        $schema = [];
+
+                                        foreach ($properties as $property) {
+                                            $valueOptions = $property->values->pluck('value', 'id')->toArray();
+
+                                            if (empty($valueOptions)) {
+                                                continue;
+                                            }
+
+                                            $fieldType = $property->getFormFieldType();
+                                            $fieldName = "property_values_{$property->id}";
+
+                                            switch ($fieldType) {
+                                                case 'radio':
+                                                    $schema[] = Radio::make($fieldName)
+                                                        ->label($property->name)
+                                                        ->options($valueOptions)
+                                                        ->descriptions($property->values->pluck('info_url', 'id')->filter()->toArray())
+                                                        ->helperText($property->description);
+                                                    break;
+
+                                                case 'select':
+                                                    $schema[] = Select::make($fieldName)
+                                                        ->label($property->name)
+                                                        ->options($valueOptions)
+                                                        ->searchable()
+                                                        ->helperText($property->description);
+                                                    break;
+
+                                                case 'checkbox':
+                                                    $schema[] = CheckboxList::make($fieldName)
+                                                        ->label($property->name)
+                                                        ->options($valueOptions)
+                                                        ->descriptions($property->values->pluck('info_url', 'id')->filter()->toArray())
+                                                        ->helperText($property->description)
+                                                        ->rules($property->max_values > 1 ? ["max:{$property->max_values}"] : []);
+                                                    break;
+
+                                                case 'multiselect':
+                                                    $schema[] = Select::make($fieldName)
+                                                        ->label($property->name)
+                                                        ->options($valueOptions)
+                                                        ->multiple()
+                                                        ->searchable()
+                                                        ->helperText($property->description)
+                                                        ->rules($property->max_values > 1 ? ["max:{$property->max_values}"] : []);
+                                                    break;
+                                            }
+                                        }
+
+                                        return $schema ?: [
+                                            Placeholder::make('no_properties')
+                                                ->label('')
+                                                ->content('No properties are configured for this product type.'),
+                                        ];
+                                    })
+                                    ->reactive()
+                                    ->columns(2),
                             ]),
 
                         Tabs\Tab::make('Images')
