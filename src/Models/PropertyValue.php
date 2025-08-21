@@ -33,9 +33,6 @@ class PropertyValue extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'value' => 'array',
-        'info_url' => 'array',
-        'image' => 'array',
         'sort' => 'integer',
         'property_id' => 'integer',
     ];
@@ -71,5 +68,23 @@ class PropertyValue extends Model implements HasMedia
     protected static function newFactory(): PropertyValueFactory
     {
         return PropertyValueFactory::new();
+    }
+
+    /**
+     * Ensure Filament receives scalar values for form hydration.
+     *
+     * In particular, return the current-locale string (or null) for the
+     * translatable `image` attribute instead of the full translations array.
+     */
+    public function attributesToArray(): array
+    {
+        $attributes = parent::attributesToArray();
+
+        if (array_key_exists('image', $attributes) && is_array($attributes['image'])) {
+            $translation = $this->getTranslation('image', app()->getLocale());
+            $attributes['image'] = $translation !== '' ? $translation : null;
+        }
+
+        return $attributes;
     }
 }

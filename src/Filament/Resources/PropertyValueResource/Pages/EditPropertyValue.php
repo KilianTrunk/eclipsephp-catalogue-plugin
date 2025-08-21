@@ -3,26 +3,32 @@
 namespace Eclipse\Catalogue\Filament\Resources\PropertyValueResource\Pages;
 
 use Eclipse\Catalogue\Filament\Resources\PropertyValueResource;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\LocaleSwitcher;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\EditRecord\Concerns\Translatable;
 
 class EditPropertyValue extends EditRecord
 {
+    use Translatable;
+
     protected static string $resource = PropertyValueResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            LocaleSwitcher::make(),
+            DeleteAction::make(),
         ];
     }
 
     protected function getRedirectUrl(): string
     {
-        if (request()->has('property')) {
-            return PropertyValueResource::getUrl('index', ['property' => request('property')]);
+        $propertyId = request('property');
+        if ($propertyId) {
+            return PropertyValueResource::getUrl('index', ['property' => $propertyId]);
         }
 
-        return parent::getRedirectUrl();
+        return PropertyValueResource::getUrl('index');
     }
 }

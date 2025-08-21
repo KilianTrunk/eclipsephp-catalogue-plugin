@@ -5,6 +5,7 @@ namespace Eclipse\Catalogue\Filament\Resources\PropertyValueResource\Pages;
 use Eclipse\Catalogue\Filament\Resources\PropertyValueResource;
 use Eclipse\Catalogue\Models\Property;
 use Filament\Actions;
+use Filament\Actions\LocaleSwitcher;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPropertyValues extends ListRecords
@@ -25,6 +26,7 @@ class ListPropertyValues extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            LocaleSwitcher::make(),
             Actions\CreateAction::make()
                 ->url(fn (): string => PropertyValueResource::getUrl('create', ['property' => $this->property?->id])),
         ];

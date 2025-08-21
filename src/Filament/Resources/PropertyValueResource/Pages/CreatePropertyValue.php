@@ -4,10 +4,14 @@ namespace Eclipse\Catalogue\Filament\Resources\PropertyValueResource\Pages;
 
 use Eclipse\Catalogue\Filament\Resources\PropertyValueResource;
 use Eclipse\Catalogue\Models\Property;
+use Filament\Actions\LocaleSwitcher;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\CreateRecord\Concerns\Translatable;
 
 class CreatePropertyValue extends CreateRecord
 {
+    use Translatable;
+
     protected static string $resource = PropertyValueResource::class;
 
     public function mount(): void
@@ -22,12 +26,20 @@ class CreatePropertyValue extends CreateRecord
         }
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            LocaleSwitcher::make(),
+        ];
+    }
+
     protected function getRedirectUrl(): string
     {
-        if (request()->has('property')) {
-            return PropertyValueResource::getUrl('index', ['property' => request('property')]);
+        $propertyId = request('property');
+        if ($propertyId) {
+            return PropertyValueResource::getUrl('index', ['property' => $propertyId]);
         }
 
-        return parent::getRedirectUrl();
+        return PropertyValueResource::getUrl('index');
     }
 }

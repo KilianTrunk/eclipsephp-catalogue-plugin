@@ -7,6 +7,7 @@ use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Models\PropertyValue;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PropertyValueResource extends Resource
 {
+    use Translatable;
+
     protected static ?string $model = PropertyValue::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
@@ -49,6 +52,30 @@ class PropertyValueResource extends Resource
                             ->label('Image')
                             ->helperText('Optional image for this value (e.g., brand logo)')
                             ->image()
+                            ->formatStateUsing(function ($state) {
+                                if (is_string($state) || $state === null) {
+                                    return $state;
+                                }
+
+                                if (is_array($state)) {
+                                    $locale = app()->getLocale();
+                                    $byLocale = $state[$locale] ?? null;
+                                    if (is_string($byLocale) && $byLocale !== '') {
+                                        return $byLocale;
+                                    }
+
+                                    foreach ($state as $value) {
+                                        if (is_string($value) && $value !== '') {
+                                            return $value;
+                                        }
+                                    }
+
+                                    return null;
+                                }
+
+                                return null;
+                            })
+                            ->nullable()
                             ->disk('public')
                             ->directory('property-values'),
 
@@ -136,6 +163,18 @@ class PropertyValueResource extends Resource
             'index' => Pages\ListPropertyValues::route('/'),
             'create' => Pages\CreatePropertyValue::route('/create'),
             'edit' => Pages\EditPropertyValue::route('/{record}/edit'),
+        ];
+    }
+
+    /**
+     * Attributes stored as JSON translations on the model.
+     */
+    public static function getTranslatableAttributes(): array
+    {
+        return [
+            'value',
+            'info_url',
+            'image',
         ];
     }
 

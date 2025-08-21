@@ -95,6 +95,50 @@ class PropertyResource extends Resource implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
+            ->relationship(function () {
+                $state = $this->getLivewire()->getTableFilterState('product_type') ?? [];
+
+                $selected = [];
+                if (is_array($state)) {
+                    if (array_key_exists('values', $state) && is_array($state['values'])) {
+                        $selected = $state['values'];
+                    } elseif (array_key_exists('value', $state)) {
+                        $selected = is_array($state['value']) ? $state['value'] : [$state['value']];
+                    } else {
+                        $selected = $state;
+                    }
+                }
+
+                $selected = array_values(array_filter($selected, fn ($v) => is_numeric($v)));
+
+                if (count($selected) === 1) {
+                    $type = ProductType::find((int) $selected[0]);
+
+                    return $type?->properties();
+                }
+
+                return null;
+            })
+            ->query(fn () => Property::query())
+            ->reorderable(
+                column: 'pivot.sort',
+                condition: function (): bool {
+                    $state = $this->getLivewire()->getTableFilterState('product_type') ?? [];
+                    $selected = [];
+                    if (is_array($state)) {
+                        if (array_key_exists('values', $state) && is_array($state['values'])) {
+                            $selected = $state['values'];
+                        } elseif (array_key_exists('value', $state)) {
+                            $selected = is_array($state['value']) ? $state['value'] : [$state['value']];
+                        } else {
+                            $selected = $state;
+                        }
+                    }
+                    $selected = array_values(array_filter($selected, fn ($v) => is_numeric($v)));
+
+                    return count($selected) === 1;
+                }
+            )
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label('Code')
