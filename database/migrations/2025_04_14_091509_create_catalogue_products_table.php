@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('catalogue_products', function (Blueprint $table) {
+            // test
             $table->id();
             $table->string('code')->nullable();
             $table->string('barcode')->nullable();
