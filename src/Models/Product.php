@@ -42,12 +42,16 @@ class Product extends Model implements HasMedia
         'name',
         'short_description',
         'description',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
         'name' => 'array',
         'short_description' => 'array',
         'description' => 'array',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
         'deleted_at' => 'datetime',
         'product_type_id' => 'integer',
         'available_from_date' => 'datetime',

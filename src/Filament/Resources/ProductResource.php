@@ -15,6 +15,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Concerns\Translatable;
@@ -149,9 +150,9 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->maxLength(255)
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.meta_title')),
 
-                                        TextInput::make('meta_description')
+                                        Textarea::make('meta_description')
                                             ->label(__('eclipse-catalogue::product.fields.meta_description'))
-                                            ->maxLength(255)
+                                            ->rows(3)
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.meta_description')),
                                     ])
                                     ->collapsible()
