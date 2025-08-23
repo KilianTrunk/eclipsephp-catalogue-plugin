@@ -3,7 +3,6 @@
 namespace Eclipse\Catalogue\Filament\Resources;
 
 use Eclipse\Catalogue\Filament\Resources\PropertyValueResource\Pages;
-use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Models\PropertyValue;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -78,9 +77,6 @@ class PropertyValueResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $propertyId = request()->has('property') ? (int) request('property') : null;
-        $property = $propertyId ? Property::find($propertyId) : null;
-
         $table = $table
             ->columns([
                 Tables\Columns\TextColumn::make('value')
@@ -125,21 +121,6 @@ class PropertyValueResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-
-        if ($property && $property->enable_sorting) {
-            $table = $table
-                ->reorderable('sort')
-                ->defaultSort('sort')
-                ->reorderRecordsTriggerAction(
-                    fn (Tables\Actions\Action $action, bool $isReordering) => $action
-                        ->button()
-                        ->label($isReordering ? 'Disable reordering' : 'Enable reordering')
-                        ->icon($isReordering ? 'heroicon-o-x-mark' : 'heroicon-o-arrows-up-down')
-                        ->color($isReordering ? 'danger' : 'primary')
-                );
-        } else {
-            $table = $table->defaultSort('value');
-        }
 
         return $table;
     }

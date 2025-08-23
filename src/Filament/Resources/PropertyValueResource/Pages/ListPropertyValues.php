@@ -9,6 +9,8 @@ use Filament\Actions;
 use Filament\Actions\LocaleSwitcher;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Pages\ListRecords\Concerns\Translatable;
+use Filament\Tables;
+use Filament\Tables\Table;
 
 class ListPropertyValues extends ListRecords
 {
@@ -86,5 +88,20 @@ class ListPropertyValues extends ListRecords
             PropertyValueResource::getUrl('index') => __('eclipse-catalogue::property-value.pages.title.default'),
             request()->url() => __('eclipse-catalogue::property-value.pages.breadcrumbs.list'),
         ];
+    }
+
+    public function getTable(): Table
+    {
+        return parent::getTable()
+            ->reorderable('sort', $this->property?->enable_sorting)
+            ->defaultSort($this->property?->enable_sorting ? 'sort' : 'value')
+            ->reorderRecordsTriggerAction(
+                fn (Tables\Actions\Action $action, bool $isReordering) => $action
+                    ->button()
+                    ->label($isReordering ? 'Disable reordering' : 'Enable reordering')
+                    ->icon($isReordering ? 'heroicon-o-x-mark' : 'heroicon-o-arrows-up-down')
+                    ->color($isReordering ? 'danger' : 'primary')
+                    ->extraAttributes(['class' => 'reorder-trigger'])
+            );
     }
 }
