@@ -7,9 +7,12 @@ use Eclipse\Catalogue\Models\Property;
 use Filament\Actions;
 use Filament\Actions\LocaleSwitcher;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Resources\Pages\ListRecords\Concerns\Translatable;
 
 class ListPropertyValues extends ListRecords
 {
+    use Translatable;
+
     protected static string $resource = PropertyValueResource::class;
 
     public ?Property $property = null;

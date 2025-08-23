@@ -29,28 +29,22 @@ class PropertyValueResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Value Information')
+                Forms\Components\Section::make(__('eclipse-catalogue::property-value.sections.value_information'))
                     ->schema([
-                        Forms\Components\Select::make('property_id')
-                            ->label('Property')
-                            ->relationship('property', 'name')
-                            ->required()
-                            ->disabled(fn ($livewire) => $livewire instanceof Pages\CreatePropertyValue && request()->has('property')),
-
                         Forms\Components\TextInput::make('value')
-                            ->label('Value')
+                            ->label(__('eclipse-catalogue::property-value.fields.value'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('info_url')
-                            ->label('Info URL')
-                            ->helperText('Optional "read more" link')
+                            ->label(__('eclipse-catalogue::property-value.fields.info_url'))
+                            ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
                             ->url()
                             ->maxLength(255),
 
                         Forms\Components\FileUpload::make('image')
-                            ->label('Image')
-                            ->helperText('Optional image for this value (e.g., brand logo)')
+                            ->label(__('eclipse-catalogue::property-value.fields.image'))
+                            ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
                             ->image()
                             ->formatStateUsing(function ($state) {
                                 if (is_string($state) || $state === null) {
@@ -78,13 +72,7 @@ class PropertyValueResource extends Resource
                             ->nullable()
                             ->disk('public')
                             ->directory('property-values'),
-
-                        Forms\Components\TextInput::make('sort')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->default(0)
-                            ->helperText('Lower numbers appear first'),
-                    ])->columns(2),
+                    ]),
             ]);
     }
 
@@ -95,46 +83,44 @@ class PropertyValueResource extends Resource
 
         $table = $table
             ->columns([
-                Tables\Columns\TextColumn::make('property.name')
-                    ->label('Property')
-                    ->searchable()
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('value')
-                    ->label('Value')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.value'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\ImageColumn::make('image')
-                    ->label('Image')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.image'))
                     ->disk('public')
                     ->size(40),
 
                 Tables\Columns\TextColumn::make('info_url')
-                    ->label('Info URL')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.info_url'))
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('sort')
-                    ->label('Sort')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.sort'))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.products_count'))
                     ->counts('products'),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('property')
+                    ->label(__('eclipse-catalogue::property-value.table.filters.property'))
                     ->relationship('property', 'name'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->modalWidth('lg')
+                    ->modalHeading(__('eclipse-catalogue::property-value.modal.edit_heading')),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -162,7 +148,6 @@ class PropertyValueResource extends Resource
         return [
             'index' => Pages\ListPropertyValues::route('/'),
             'create' => Pages\CreatePropertyValue::route('/create'),
-            'edit' => Pages\EditPropertyValue::route('/{record}/edit'),
         ];
     }
 

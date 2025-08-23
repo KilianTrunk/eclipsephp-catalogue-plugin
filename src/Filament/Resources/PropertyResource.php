@@ -28,64 +28,64 @@ class PropertyResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
+                Forms\Components\Section::make(__('eclipse-catalogue::property.sections.basic_information'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Name')
+                            ->label(__('eclipse-catalogue::property.fields.name'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('code')
-                            ->label('Code')
-                            ->helperText('Optional alphanumeric code with underscores, automatically converted to lowercase')
+                            ->label(__('eclipse-catalogue::property.fields.code'))
+                            ->helperText(__('eclipse-catalogue::property.help_text.code'))
                             ->regex('/^[a-zA-Z0-9_]*$/')
                             ->unique(ignoreRecord: true),
 
                         Forms\Components\Textarea::make('description')
-                            ->label('Description')
+                            ->label(__('eclipse-catalogue::property.fields.description'))
                             ->rows(3),
 
                         Forms\Components\TextInput::make('internal_name')
-                            ->label('Internal Name')
-                            ->helperText('Internal name for distinction, not translatable')
+                            ->label(__('eclipse-catalogue::property.fields.internal_name'))
+                            ->helperText(__('eclipse-catalogue::property.help_text.internal_name'))
                             ->maxLength(255),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Configuration')
+                Forms\Components\Section::make(__('eclipse-catalogue::property.sections.configuration'))
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label(__('eclipse-catalogue::property.fields.is_active'))
                             ->default(true),
 
                         Forms\Components\Toggle::make('is_global')
-                            ->label('Global Property')
-                            ->helperText('Auto-assigned to all product types')
+                            ->label(__('eclipse-catalogue::property.fields.is_global'))
+                            ->helperText(__('eclipse-catalogue::property.help_text.is_global'))
                             ->reactive(),
 
                         Forms\Components\Select::make('max_values')
-                            ->label('Maximum Values')
+                            ->label(__('eclipse-catalogue::property.fields.max_values'))
                             ->options([
-                                1 => 'Single value (1)',
-                                2 => 'Multiple values (2+)',
+                                1 => __('eclipse-catalogue::property.options.max_values.1'),
+                                2 => __('eclipse-catalogue::property.options.max_values.2'),
                             ])
-                            ->helperText('Controls form field type: single = radio/select, multiple = checkbox/multiselect'),
+                            ->helperText(__('eclipse-catalogue::property.help_text.max_values')),
 
                         Forms\Components\Toggle::make('enable_sorting')
-                            ->label('Enable Manual Sorting')
-                            ->helperText('Allow drag-and-drop sorting of property values'),
+                            ->label(__('eclipse-catalogue::property.fields.enable_sorting'))
+                            ->helperText(__('eclipse-catalogue::property.help_text.enable_sorting')),
 
                         Forms\Components\Toggle::make('is_filter')
-                            ->label('Show as Filter')
-                            ->helperText('Display property as filter in product table'),
+                            ->label(__('eclipse-catalogue::property.fields.is_filter'))
+                            ->helperText(__('eclipse-catalogue::property.help_text.is_filter')),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Product Types')
+                Forms\Components\Section::make(__('eclipse-catalogue::property.sections.product_types'))
                     ->schema([
                         Forms\Components\CheckboxList::make('product_types')
-                            ->label('Assign to Product Types')
+                            ->label(__('eclipse-catalogue::property.fields.product_types'))
                             ->relationship('productTypes', 'name')
                             ->options(ProductType::pluck('name', 'id'))
-                            ->helperText('Select product types for this property (ignored if Global is enabled)')
+                            ->helperText(__('eclipse-catalogue::property.help_text.product_types'))
                             ->hidden(fn (Forms\Get $get) => $get('is_global')),
                     ])
                     ->hidden(fn (Forms\Get $get) => $get('is_global')),
@@ -97,69 +97,69 @@ class PropertyResource extends Resource implements HasShieldPermissions
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Code')
+                    ->label(__('eclipse-catalogue::property.table.columns.code'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label(__('eclipse-catalogue::property.table.columns.name'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('internal_name')
-                    ->label('Internal Name')
+                    ->label(__('eclipse-catalogue::property.table.columns.internal_name'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\IconColumn::make('is_global')
-                    ->label('Global')
+                    ->label(__('eclipse-catalogue::property.table.columns.is_global'))
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('max_values')
-                    ->label('Max Values')
-                    ->formatStateUsing(fn ($state) => $state === 1 ? 'Single' : 'Multiple'),
+                    ->label(__('eclipse-catalogue::property.table.columns.max_values'))
+                    ->formatStateUsing(fn ($state) => $state === 1 ? __('eclipse-catalogue::property.format.max_values.single') : __('eclipse-catalogue::property.format.max_values.multiple')),
 
                 Tables\Columns\IconColumn::make('enable_sorting')
-                    ->label('Sortable')
+                    ->label(__('eclipse-catalogue::property.table.columns.enable_sorting'))
                     ->boolean(),
 
                 Tables\Columns\IconColumn::make('is_filter')
-                    ->label('Filter')
+                    ->label(__('eclipse-catalogue::property.table.columns.is_filter'))
                     ->boolean(),
 
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('eclipse-catalogue::property.table.columns.is_active'))
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('values_count')
-                    ->label('Values')
+                    ->label(__('eclipse-catalogue::property.table.columns.values_count'))
                     ->counts('values'),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('eclipse-catalogue::property.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('product_type')
-                    ->label('Product Type')
+                    ->label(__('eclipse-catalogue::property.table.filters.product_type'))
                     ->relationship('productTypes', 'name')
                     ->multiple(),
 
                 Tables\Filters\TernaryFilter::make('is_global')
-                    ->label('Global Properties'),
+                    ->label(__('eclipse-catalogue::property.table.filters.is_global')),
 
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active Properties'),
+                    ->label(__('eclipse-catalogue::property.table.filters.is_active')),
 
                 Tables\Filters\TernaryFilter::make('is_filter')
-                    ->label('Filter Properties'),
+                    ->label(__('eclipse-catalogue::property.table.filters.is_filter')),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\Action::make('values')
-                        ->label('Values')
+                        ->label(__('eclipse-catalogue::property.table.actions.values'))
                         ->icon('heroicon-o-list-bullet')
                         ->url(fn (Property $record): string => PropertyValueResource::getUrl('index', ['property' => $record->id])),
                     Tables\Actions\EditAction::make(),
