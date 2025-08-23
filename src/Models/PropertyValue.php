@@ -59,6 +59,13 @@ class PropertyValue extends Model implements HasMedia
         return PropertyValueFactory::new();
     }
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope('orderBySort', function ($query) {
+            $query->orderBy('sort');
+        });
+    }
+
     /**
      * Ensure Filament receives scalar values for form hydration.
      *

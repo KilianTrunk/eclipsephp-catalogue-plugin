@@ -62,12 +62,11 @@ class PropertyResource extends Resource implements HasShieldPermissions
                             ->helperText(__('eclipse-catalogue::property.help_text.is_global'))
                             ->reactive(),
 
-                        Forms\Components\Select::make('max_values')
+                        Forms\Components\TextInput::make('max_values')
                             ->label(__('eclipse-catalogue::property.fields.max_values'))
-                            ->options([
-                                1 => __('eclipse-catalogue::property.options.max_values.1'),
-                                2 => __('eclipse-catalogue::property.options.max_values.2'),
-                            ])
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(10)
                             ->helperText(__('eclipse-catalogue::property.help_text.max_values')),
 
                         Forms\Components\Toggle::make('enable_sorting')
@@ -117,7 +116,7 @@ class PropertyResource extends Resource implements HasShieldPermissions
 
                 Tables\Columns\TextColumn::make('max_values')
                     ->label(__('eclipse-catalogue::property.table.columns.max_values'))
-                    ->formatStateUsing(fn ($state) => $state === 1 ? __('eclipse-catalogue::property.format.max_values.single') : __('eclipse-catalogue::property.format.max_values.multiple')),
+                    ->numeric(),
 
                 Tables\Columns\IconColumn::make('enable_sorting')
                     ->label(__('eclipse-catalogue::property.table.columns.enable_sorting'))

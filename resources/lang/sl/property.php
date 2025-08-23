@@ -34,7 +34,7 @@ return [
         'code' => 'Neobvezna alfanumerična koda s podčrtaji, avtomatsko pretvorjena v male črke',
         'internal_name' => 'Interno ime za razlikovanje, ni prevedeno',
         'is_global' => 'Avtomatsko dodeljeno vsem tipom proizvodov',
-        'max_values' => 'Nadzoruje tip polja obrazca: ena = radio/select, več = checkbox/multiselect',
+        'max_values' => 'Največje število vrednosti, ki so dovoljene za to lastnost (1 = ena vrednost, 2+ = več vrednosti)',
         'enable_sorting' => 'Dovoli razvrščanje vrednosti lastnosti z vlečenjem',
         'is_filter' => 'Prikaži lastnost kot filter v tabeli proizvodov',
         'product_types' => 'Izberi tipe proizvodov za to lastnost (ignorirano, če je Global omogočeno)',
@@ -66,19 +66,7 @@ return [
         ],
     ],
 
-    'options' => [
-        'max_values' => [
-            1 => 'Ena vrednost (1)',
-            2 => 'Več vrednosti (2+)',
-        ],
-    ],
 
-    'format' => [
-        'max_values' => [
-            'single' => 'Ena',
-            'multiple' => 'Več',
-        ],
-    ],
 
     'messages' => [
         'created' => 'Lastnost je bila uspešno ustvarjena.',

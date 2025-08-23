@@ -34,7 +34,7 @@ return [
         'code' => 'Optional alphanumeric code with underscores, automatically converted to lowercase',
         'internal_name' => 'Internal name for distinction, not translatable',
         'is_global' => 'Auto-assigned to all product types',
-        'max_values' => 'Controls form field type: single = radio/select, multiple = checkbox/multiselect',
+        'max_values' => 'Maximum number of values allowed for this property (1 = single value, 2+ = multiple values)',
         'enable_sorting' => 'Allow drag-and-drop sorting of property values',
         'is_filter' => 'Display property as filter in product table',
         'product_types' => 'Select product types for this property (ignored if Global is enabled)',
@@ -66,19 +66,7 @@ return [
         ],
     ],
 
-    'options' => [
-        'max_values' => [
-            1 => 'Single value (1)',
-            2 => 'Multiple values (2+)',
-        ],
-    ],
 
-    'format' => [
-        'max_values' => [
-            'single' => 'Single',
-            'multiple' => 'Multiple',
-        ],
-    ],
 
     'messages' => [
         'created' => 'Property created successfully.',
