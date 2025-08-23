@@ -50,28 +50,6 @@ it('can update a property value', function () {
     ]);
 });
 
-it('can soft delete a property value', function () {
-    $value = PropertyValue::factory()->create();
-
-    $value->delete();
-
-    $this->assertSoftDeleted('pim_property_value', [
-        'id' => $value->id,
-    ]);
-});
-
-it('can restore a soft deleted property value', function () {
-    $value = PropertyValue::factory()->create();
-
-    $value->delete();
-    $value->restore();
-
-    $this->assertDatabaseHas('pim_property_value', [
-        'id' => $value->id,
-        'deleted_at' => null,
-    ]);
-});
-
 it('maintains sort order when creating multiple values', function () {
     $property = Property::factory()->create();
 

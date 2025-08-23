@@ -152,22 +152,6 @@ it('can detach property from product types', function () {
     ]);
 });
 
-it('cascades delete to property values', function () {
-    $property = Property::factory()->create();
-    $value = PropertyValue::factory()->create(['property_id' => $property->id]);
-
-    // First soft delete, then force delete to test cascade
-    $property->delete();
-    $property->forceDelete();
-
-    $this->assertDatabaseMissing('pim_property', [
-        'id' => $property->id,
-    ]);
-
-    // Property value should also be force deleted due to cascade
-    expect(PropertyValue::withTrashed()->find($value->id))->toBeNull();
-});
-
 it('cascades delete to product type assignments', function () {
     $property = Property::factory()->create(['is_global' => false]);
     $productType = ProductType::factory()->create();

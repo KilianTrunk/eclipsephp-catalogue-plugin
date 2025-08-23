@@ -7,14 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
 class PropertyValue extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasTranslations, InteractsWithMedia;
 
     protected $table = 'pim_property_value';
 
@@ -53,16 +52,6 @@ class PropertyValue extends Model implements HasMedia
         $this->addMediaCollection('images')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'])
             ->useDisk('public');
-    }
-
-    protected static function booted(): void
-    {
-        static::deleting(function (PropertyValue $value) {
-            if ($value->isForceDeleting()) {
-                // Delete product assignments
-                $value->products()->detach();
-            }
-        });
     }
 
     protected static function newFactory(): PropertyValueFactory

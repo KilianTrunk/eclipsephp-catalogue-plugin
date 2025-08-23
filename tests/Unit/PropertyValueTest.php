@@ -84,27 +84,6 @@ it('is sorted by sort field by default', function () {
     expect($sortedValues->last()->id)->toBe($value1->id);
 });
 
-it('can soft delete property value', function () {
-    $value = PropertyValue::factory()->create();
-    $id = $value->id;
-
-    $value->delete();
-
-    expect(PropertyValue::find($id))->toBeNull();
-    expect(PropertyValue::withTrashed()->find($id))->not->toBeNull();
-    expect(PropertyValue::withTrashed()->find($id)->trashed())->toBeTrue();
-});
-
-it('can restore soft deleted property value', function () {
-    $value = PropertyValue::factory()->create();
-    $value->delete();
-
-    $value->restore();
-
-    expect($value->trashed())->toBeFalse();
-    expect(PropertyValue::find($value->id))->not->toBeNull();
-});
-
 // Translation tests
 it('value attribute is translatable', function () {
     $value = PropertyValue::factory()->create([

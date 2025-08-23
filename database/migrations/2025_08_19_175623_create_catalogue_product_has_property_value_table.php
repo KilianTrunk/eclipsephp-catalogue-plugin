@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('catalogue_product_has_property_value', function (Blueprint $table) {
-            $table->foreignId('product_id')->constrained('catalogue_products')->onDelete('cascade');
-            $table->foreignId('property_value_id')->constrained('pim_property_value')->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('catalogue_products')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('property_value_id')->constrained('pim_property_value')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
             $table->unique(['product_id', 'property_value_id'], 'product_property_value_unique');
         });

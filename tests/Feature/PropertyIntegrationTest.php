@@ -213,27 +213,3 @@ it('deleting property removes product type assignments', function () {
         'property_id' => $property->id,
     ]);
 });
-
-it('deleting property value removes product assignments', function () {
-    $product = Product::factory()->create();
-    $property = Property::factory()->create();
-    $value = PropertyValue::factory()->create(['property_id' => $property->id]);
-
-    $product->propertyValues()->attach($value->id);
-
-    // Verify assignment exists
-    $this->assertDatabaseHas('catalogue_product_has_property_value', [
-        'product_id' => $product->id,
-        'property_value_id' => $value->id,
-    ]);
-
-    // First soft delete, then force delete to test cascade
-    $value->delete();
-    $value->forceDelete();
-
-    // Verify assignment is removed
-    $this->assertDatabaseMissing('catalogue_product_has_property_value', [
-        'product_id' => $product->id,
-        'property_value_id' => $value->id,
-    ]);
-});

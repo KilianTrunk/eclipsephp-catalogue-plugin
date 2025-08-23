@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pim_product_type_has_property', function (Blueprint $table) {
-            $table->foreignId('product_type_id')->constrained('pim_product_types')->onDelete('cascade');
-            $table->foreignId('property_id')->constrained('pim_property')->onDelete('cascade');
+            $table->foreignId('product_type_id')->constrained('pim_product_types')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('property_id')->constrained('pim_property')->onDelete('cascade')->onUpdate('cascade');
             $table->smallInteger('sort')->nullable();
             $table->timestamps();
             $table->primary(['product_type_id', 'property_id']);
