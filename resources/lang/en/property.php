@@ -66,8 +66,6 @@ return [
         ],
     ],
 
-
-
     'messages' => [
         'created' => 'Property created successfully.',
         'updated' => 'Property updated successfully.',
