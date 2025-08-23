@@ -1,6 +1,6 @@
 <?php
 
-namespace Eclipse\Catalogue\Database\Seeders;
+namespace Eclipse\Catalogue\Seeders;
 
 use Eclipse\Catalogue\Models\ProductType;
 use Eclipse\Catalogue\Models\Property;
