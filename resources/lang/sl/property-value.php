@@ -46,6 +46,7 @@ return [
     ],
 
     'modal' => [
+        'create_heading' => 'Ustvari vrednost lastnosti',
         'edit_heading' => 'Uredi vrednost lastnosti',
     ],
 

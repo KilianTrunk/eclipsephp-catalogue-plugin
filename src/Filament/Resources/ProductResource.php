@@ -103,6 +103,31 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->searchable()
                                             ->placeholder('Category (optional)'),
 
+                                        TextInput::make('short_description'),
+
+                                        RichEditor::make('description')
+                                            ->columnSpanFull(),
+                                    ]),
+
+                                Section::make('Timestamps')
+                                    ->schema([
+                                        Placeholder::make('created_at')
+                                            ->label('Created Date')
+                                            ->content(fn (?Product $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+
+                                        Placeholder::make('updated_at')
+                                            ->label('Last Modified Date')
+                                            ->content(fn (?Product $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ])
+                                    ->columns(2)
+                                    ->hidden(fn (?Product $record) => $record === null),
+                            ]),
+
+                        Tabs\Tab::make('Properties')
+                            ->schema([
+                                Section::make('Product Type Selection')
+                                    ->description('Select the product type to see available properties')
+                                    ->schema([
                                         Select::make('product_type_id')
                                             ->label(__('eclipse-catalogue::product.fields.product_type'))
                                             ->relationship(
@@ -126,30 +151,11 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             )
                                             ->searchable()
                                             ->preload()
-                                            ->placeholder(__('eclipse-catalogue::product.placeholders.product_type')),
-
-                                        TextInput::make('short_description'),
-
-                                        RichEditor::make('description')
-                                            ->columnSpanFull(),
-                                    ]),
-
-                                Section::make('Timestamps')
-                                    ->schema([
-                                        Placeholder::make('created_at')
-                                            ->label('Created Date')
-                                            ->content(fn (?Product $record): string => $record?->created_at?->diffForHumans() ?? '-'),
-
-                                        Placeholder::make('updated_at')
-                                            ->label('Last Modified Date')
-                                            ->content(fn (?Product $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.product_type'))
+                                            ->reactive(),
                                     ])
-                                    ->columns(2)
-                                    ->hidden(fn (?Product $record) => $record === null),
-                            ]),
+                                    ->columns(1),
 
-                        Tabs\Tab::make('Properties')
-                            ->schema([
                                 Section::make('Product Properties')
                                     ->description('Select values for properties applicable to this product type')
                                     ->schema(function (Get $get, ?Product $record) {
@@ -193,7 +199,25 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                         ->label($property->name)
                                                         ->options($valueOptions)
                                                         ->descriptions($property->values->pluck('info_url', 'id')->filter()->toArray())
-                                                        ->helperText($property->description);
+                                                        ->helperText($property->description)
+                                                        ->createOptionForm([
+                                                            TextInput::make('value')
+                                                                ->label('Value')
+                                                                ->required()
+                                                                ->maxLength(255),
+                                                            TextInput::make('info_url')
+                                                                ->label('Info URL')
+                                                                ->url()
+                                                                ->maxLength(255),
+                                                            TextInput::make('image')
+                                                                ->label('Image')
+                                                                ->maxLength(255),
+                                                        ])
+                                                        ->createOptionAction(function ($action) {
+                                                            return $action
+                                                                ->modalHeading('Create New Property Value')
+                                                                ->modalSubmitActionLabel('Create Value');
+                                                        });
                                                     break;
 
                                                 case 'select':
@@ -201,6 +225,24 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                         ->label($property->name)
                                                         ->options($valueOptions)
                                                         ->searchable()
+                                                        ->createOptionForm([
+                                                            TextInput::make('value')
+                                                                ->label('Value')
+                                                                ->required()
+                                                                ->maxLength(255),
+                                                            TextInput::make('info_url')
+                                                                ->label('Info URL')
+                                                                ->url()
+                                                                ->maxLength(255),
+                                                            TextInput::make('image')
+                                                                ->label('Image')
+                                                                ->maxLength(255),
+                                                        ])
+                                                        ->createOptionAction(function ($action) {
+                                                            return $action
+                                                                ->modalHeading('Create New Property Value')
+                                                                ->modalSubmitActionLabel('Create Value');
+                                                        })
                                                         ->helperText($property->description);
                                                     break;
 
@@ -210,7 +252,25 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                         ->options($valueOptions)
                                                         ->descriptions($property->values->pluck('info_url', 'id')->filter()->toArray())
                                                         ->helperText($property->description)
-                                                        ->rules($property->max_values > 1 ? ["max:{$property->max_values}"] : []);
+                                                        ->rules($property->max_values > 1 ? ["max:{$property->max_values}"] : [])
+                                                        ->createOptionForm([
+                                                            TextInput::make('value')
+                                                                ->label('Value')
+                                                                ->required()
+                                                                ->maxLength(255),
+                                                            TextInput::make('info_url')
+                                                                ->label('Info URL')
+                                                                ->url()
+                                                                ->maxLength(255),
+                                                            TextInput::make('image')
+                                                                ->label('Image')
+                                                                ->maxLength(255),
+                                                        ])
+                                                        ->createOptionAction(function ($action) {
+                                                            return $action
+                                                                ->modalHeading('Create New Property Value')
+                                                                ->modalSubmitActionLabel('Create Value');
+                                                        });
                                                     break;
 
                                                 case 'multiselect':
@@ -219,6 +279,24 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                         ->options($valueOptions)
                                                         ->multiple()
                                                         ->searchable()
+                                                        ->createOptionForm([
+                                                            TextInput::make('value')
+                                                                ->label('Value')
+                                                                ->required()
+                                                                ->maxLength(255),
+                                                            TextInput::make('info_url')
+                                                                ->label('Info URL')
+                                                                ->url()
+                                                                ->maxLength(255),
+                                                            TextInput::make('image')
+                                                                ->label('Image')
+                                                                ->maxLength(255),
+                                                        ])
+                                                        ->createOptionAction(function ($action) {
+                                                            return $action
+                                                                ->modalHeading('Create New Property Value')
+                                                                ->modalSubmitActionLabel('Create Value');
+                                                        })
                                                         ->helperText($property->description)
                                                         ->rules($property->max_values > 1 ? ["max:{$property->max_values}"] : []);
                                                     break;

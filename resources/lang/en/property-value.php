@@ -46,6 +46,7 @@ return [
     ],
 
     'modal' => [
+        'create_heading' => 'Create Property Value',
         'edit_heading' => 'Edit Property Value',
     ],
 

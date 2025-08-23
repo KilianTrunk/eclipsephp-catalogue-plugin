@@ -66,8 +66,6 @@ return [
         ],
     ],
 
-
-
     'messages' => [
         'created' => 'Lastnost je bila uspešno ustvarjena.',
         'updated' => 'Lastnost je bila uspešno posodobljena.',

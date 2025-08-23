@@ -83,7 +83,12 @@ class PropertiesRelationManager extends RelationManager
                     ]),
             ])
             ->actions([
-                Tables\Actions\DetachAction::make(),
+                Tables\Actions\Action::make('edit_property')
+                    ->label('Edit Property')
+                    ->icon('heroicon-o-pencil')
+                    ->url(fn ($record): string => \Eclipse\Catalogue\Filament\Resources\PropertyResource::getUrl('edit', ['record' => $record->id]))
+                    ->openUrlInNewTab(),
+
                 Tables\Actions\Action::make('edit_pivot')
                     ->label('Edit Sort')
                     ->icon('heroicon-o-pencil')
@@ -99,6 +104,8 @@ class PropertiesRelationManager extends RelationManager
                     ->action(function (array $data, $record): void {
                         $record->pivot->update(['sort' => $data['sort']]);
                     }),
+
+                Tables\Actions\DetachAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

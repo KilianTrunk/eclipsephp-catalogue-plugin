@@ -147,7 +147,6 @@ class PropertyValueResource extends Resource
     {
         return [
             'index' => Pages\ListPropertyValues::route('/'),
-            'create' => Pages\CreatePropertyValue::route('/create'),
         ];
     }
 

@@ -32,7 +32,36 @@ class ListPropertyValues extends ListRecords
         return [
             LocaleSwitcher::make(),
             Actions\CreateAction::make()
-                ->url(fn (): string => PropertyValueResource::getUrl('create', ['property' => $this->property?->id])),
+                ->modalWidth('lg')
+                ->modalHeading(__('eclipse-catalogue::property-value.modal.create_heading'))
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('value')
+                        ->label(__('eclipse-catalogue::property-value.fields.value'))
+                        ->required()
+                        ->maxLength(255),
+
+                    \Filament\Forms\Components\TextInput::make('info_url')
+                        ->label(__('eclipse-catalogue::property-value.fields.info_url'))
+                        ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
+                        ->url()
+                        ->maxLength(255),
+
+                    \Filament\Forms\Components\FileUpload::make('image')
+                        ->label(__('eclipse-catalogue::property-value.fields.image'))
+                        ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
+                        ->image()
+                        ->nullable()
+                        ->disk('public')
+                        ->directory('property-values'),
+                ])
+                ->mutateFormDataUsing(function (array $data): array {
+                    // Set the property_id from the request if available
+                    if (request()->has('property')) {
+                        $data['property_id'] = (int) request('property');
+                    }
+
+                    return $data;
+                }),
         ];
     }
 
