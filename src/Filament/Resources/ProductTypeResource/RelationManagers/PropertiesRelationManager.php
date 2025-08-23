@@ -100,8 +100,14 @@ class PropertiesRelationManager extends RelationManager
                         ->label('Remove'),
                 ]),
             ])
-            ->persistSortInSession(false)
             ->defaultSort('pim_product_type_has_property.sort')
-            ->reorderable('pim_product_type_has_property.sort');
+            ->reorderable('pim_product_type_has_property.sort')
+            ->reorderRecordsTriggerAction(
+                fn (Tables\Actions\Action $action, bool $isReordering) => $action
+                    ->button()
+                    ->label($isReordering ? 'Disable reordering' : 'Enable reordering')
+                    ->icon($isReordering ? 'heroicon-o-x-mark' : 'heroicon-o-arrows-up-down')
+                    ->color($isReordering ? 'danger' : 'primary')
+            );
     }
 }
