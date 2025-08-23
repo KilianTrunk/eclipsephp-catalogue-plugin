@@ -111,7 +111,8 @@ class PropertyValueResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('property')
                     ->label(__('eclipse-catalogue::property-value.table.filters.property'))
-                    ->relationship('property', 'name'),
+                    ->relationship('property', 'name')
+                    ->default(fn () => request('property')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
