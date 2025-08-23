@@ -98,10 +98,6 @@ class PropertyValueResource extends Resource
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('sort')
-                    ->label(__('eclipse-catalogue::property-value.table.columns.sort'))
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('products_count')
                     ->label(__('eclipse-catalogue::property-value.table.columns.products_count'))
                     ->counts('products'),

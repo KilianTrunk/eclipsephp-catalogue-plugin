@@ -58,10 +58,6 @@ class PropertiesRelationManager extends RelationManager
                     ->label('Filter')
                     ->boolean(),
 
-                Tables\Columns\TextColumn::make('pivot_sort')
-                    ->label('Sort Order')
-                    ->state(fn ($record) => $record->pivot->sort ?? null),
-
                 Tables\Columns\TextColumn::make('values_count')
                     ->label('Values')
                     ->counts('values'),
@@ -72,14 +68,20 @@ class PropertiesRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
+                    ->label('Add property')
+                    ->modalHeading('Add Property')
+                    ->modalSubmitActionLabel('Add Property')
+                    ->modalCancelActionLabel('Cancel')
+                    ->extraModalFooterActions(
+                        fn (Tables\Actions\AttachAction $action): array => [
+                            $action->makeModalSubmitAction('submitAnother', ['another' => true])
+                                ->label('Add Property & Add Another'),
+                        ]
+                    )
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
-                            ->options(Property::where('is_active', true)->pluck('name', 'id'))
+                            ->options(Property::where('is_active', true)->pluck('name', 'id')->all())
                             ->searchable(),
-                        Forms\Components\TextInput::make('sort')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->default(0),
                     ]),
             ])
             ->actions([
@@ -89,27 +91,13 @@ class PropertiesRelationManager extends RelationManager
                     ->url(fn ($record): string => \Eclipse\Catalogue\Filament\Resources\PropertyResource::getUrl('edit', ['record' => $record->id]))
                     ->openUrlInNewTab(),
 
-                Tables\Actions\Action::make('edit_pivot')
-                    ->label('Edit Sort')
-                    ->icon('heroicon-o-pencil')
-                    ->form([
-                        Forms\Components\TextInput::make('sort')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->required(),
-                    ])
-                    ->fillForm(fn ($record): array => [
-                        'sort' => $record->pivot->sort,
-                    ])
-                    ->action(function (array $data, $record): void {
-                        $record->pivot->update(['sort' => $data['sort']]);
-                    }),
-
-                Tables\Actions\DetachAction::make(),
+                Tables\Actions\DetachAction::make()
+                    ->label('Remove'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+                    Tables\Actions\DetachBulkAction::make()
+                        ->label('Remove'),
                 ]),
             ])
             ->persistSortInSession(false)

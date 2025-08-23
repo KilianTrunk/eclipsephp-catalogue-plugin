@@ -67,10 +67,6 @@ class ValuesRelationManager extends RelationManager
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('sort')
-                    ->label('Sort')
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('products_count')
                     ->label('Products')
                     ->counts('products'),
