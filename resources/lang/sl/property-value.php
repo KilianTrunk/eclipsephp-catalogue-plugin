@@ -54,4 +54,15 @@ return [
         'updated' => 'Vrednost lastnosti je bila uspešno posodobljena.',
         'deleted' => 'Vrednost lastnosti je bila uspešno izbrisana.',
     ],
+
+    'pages' => [
+        'title' => [
+            'with_property' => 'Vrednosti za: :property',
+            'default' => 'Vrednosti lastnosti',
+        ],
+        'breadcrumbs' => [
+            'properties' => 'Lastnosti',
+            'list' => 'Seznam',
+        ],
+    ],
 ];

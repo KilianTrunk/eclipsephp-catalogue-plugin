@@ -54,4 +54,15 @@ return [
         'updated' => 'Property value updated successfully.',
         'deleted' => 'Property value deleted successfully.',
     ],
+
+    'pages' => [
+        'title' => [
+            'with_property' => 'Values for: :property',
+            'default' => 'Property Values',
+        ],
+        'breadcrumbs' => [
+            'properties' => 'Properties',
+            'list' => 'List',
+        ],
+    ],
 ];
