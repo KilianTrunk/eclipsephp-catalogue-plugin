@@ -126,17 +126,21 @@ class PropertyValueResource extends Resource
             ]);
 
         if ($property && $property->enable_sorting) {
-            $table = $table->reorderable('sort')->defaultSort('sort');
+            $table = $table
+                ->reorderable('sort')
+                ->defaultSort('sort')
+                ->reorderRecordsTriggerAction(
+                    fn (Tables\Actions\Action $action, bool $isReordering) => $action
+                        ->button()
+                        ->label($isReordering ? 'Disable reordering' : 'Enable reordering')
+                        ->icon($isReordering ? 'heroicon-o-x-mark' : 'heroicon-o-arrows-up-down')
+                        ->color($isReordering ? 'danger' : 'primary')
+                );
         } else {
             $table = $table->defaultSort('value');
         }
 
-        return $table
-            ->modifyQueryUsing(function (Builder $query) {
-                if (request()->has('property')) {
-                    $query->where('property_id', request('property'));
-                }
-            });
+        return $table;
     }
 
     public static function getPages(): array
