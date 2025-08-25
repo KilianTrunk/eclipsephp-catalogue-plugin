@@ -38,7 +38,7 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Load property values for the product
+        // Hydrate property values for the product
         if ($this->record && $this->record->product_type_id) {
             $properties = Property::where('is_active', true)
                 ->where(function ($query) {
@@ -56,13 +56,45 @@ class EditProduct extends EditRecord
                     ->pluck('pim_property_value.id')
                     ->toArray();
 
-                if ($property->max_values === 1) {
-                    $data[$fieldName] = $selectedValues[0] ?? null;
-                } else {
-                    $data[$fieldName] = $selectedValues;
-                }
+                $data[$fieldName] = ($property->max_values === 1)
+                    ? ($selectedValues[0] ?? null)
+                    : $selectedValues;
             }
         }
+
+        // Hydrate tenant-scoped fields
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+
+        if (! $tenantFK) {
+            $recordData = $this->record->productData()->first();
+            if ($recordData) {
+                $data['is_active'] = $recordData->is_active;
+                $data['has_free_delivery'] = $recordData->has_free_delivery;
+                $data['available_from_date'] = $recordData->available_from_date;
+                $data['sorting_label'] = $recordData->sorting_label;
+                $data['category_id'] = $recordData->category_id ?? null;
+            }
+
+            return $data;
+        }
+
+        $tenantData = [];
+        $dataRecords = $this->record->productData;
+
+        foreach ($dataRecords as $tenantRecord) {
+            $tenantId = $tenantRecord->getAttribute($tenantFK);
+            $tenantData[$tenantId] = [
+                'is_active' => $tenantRecord->is_active,
+                'has_free_delivery' => $tenantRecord->has_free_delivery,
+                'available_from_date' => $tenantRecord->available_from_date,
+                'sorting_label' => $tenantRecord->sorting_label,
+                'category_id' => $tenantRecord->category_id ?? null,
+            ];
+        }
+
+        $data['tenant_data'] = $tenantData;
+        $currentTenant = \Filament\Facades\Filament::getTenant();
+        $data['selected_tenant'] = $currentTenant?->id;
 
         return $data;
     }
@@ -139,44 +171,6 @@ class EditProduct extends EditRecord
                 }),
             $this->getCancelFormAction(),
         ];
-    }
-
-    protected function mutateFormDataBeforeFill(array $data): array
-    {
-        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
-
-        if (! $tenantFK) {
-            $recordData = $this->record->productData()->first();
-            if ($recordData) {
-                $data['is_active'] = $recordData->is_active;
-                $data['has_free_delivery'] = $recordData->has_free_delivery;
-                $data['available_from_date'] = $recordData->available_from_date;
-                $data['sorting_label'] = $recordData->sorting_label;
-                $data['category_id'] = $recordData->category_id ?? null;
-            }
-
-            return $data;
-        }
-
-        $tenantData = [];
-        $dataRecords = $this->record->productData;
-
-        foreach ($dataRecords as $tenantRecord) {
-            $tenantId = $tenantRecord->getAttribute($tenantFK);
-            $tenantData[$tenantId] = [
-                'is_active' => $tenantRecord->is_active,
-                'has_free_delivery' => $tenantRecord->has_free_delivery,
-                'available_from_date' => $tenantRecord->available_from_date,
-                'sorting_label' => $tenantRecord->sorting_label,
-                'category_id' => $tenantRecord->category_id ?? null,
-            ];
-        }
-
-        $data['tenant_data'] = $tenantData;
-        $currentTenant = \Filament\Facades\Filament::getTenant();
-        $data['selected_tenant'] = $currentTenant?->id;
-
-        return $data;
     }
 
     protected function handleRecordUpdate(Model $record, array $data): Model

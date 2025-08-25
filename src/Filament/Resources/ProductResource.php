@@ -9,12 +9,12 @@ use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
 use Eclipse\Catalogue\Models\Property;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Radio;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Eclipse\World\Models\Country;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -104,13 +104,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                         TextInput::make('short_description')
                                             ->maxLength(500),
-                                        Select::make('category_id')
-                                            ->label('Category')
-                                            ->options(Category::getHierarchicalOptions())
-                                            ->searchable()
-                                            ->placeholder('Category (optional)'),
-
-                                        TextInput::make('short_description'),
+                                        // Category is tenant-scoped; configured in Tenant Settings section.
 
                                         RichEditor::make('description')
                                             ->columnSpanFull(),
@@ -128,6 +122,65 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     ])
                                     ->columns(2)
                                     ->hidden(fn (?Product $record) => $record === null),
+
+                                Section::make(__('eclipse-catalogue::product.sections.additional'))
+                                    ->schema([
+                                        Select::make('origin_country_id')
+                                            ->label(__('eclipse-catalogue::product.fields.origin_country_id'))
+                                            ->relationship('originCountry', 'name')
+                                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->id} - {$record->name}")
+                                            ->searchable(['id', 'name'])
+                                            ->preload()
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.origin_country_id')),
+                                    ])
+                                    ->collapsible()
+                                    ->persistCollapsed(),
+
+                                Section::make(__('eclipse-catalogue::product.sections.seo'))
+                                    ->description(__('eclipse-catalogue::product.sections.seo_description'))
+                                    ->schema([
+                                        TextInput::make('meta_title')
+                                            ->label(__('eclipse-catalogue::product.fields.meta_title'))
+                                            ->maxLength(255)
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.meta_title')),
+
+                                        Textarea::make('meta_description')
+                                            ->label(__('eclipse-catalogue::product.fields.meta_description'))
+                                            ->rows(3)
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.meta_description')),
+                                    ])
+                                    ->collapsible()
+                                    ->persistCollapsed(),
+
+                                GenericTenantFieldsComponent::make(
+                                    tenantFlags: ['is_active', 'has_free_delivery'],
+                                    mutuallyExclusiveFlagSets: [],
+                                    translationPrefix: 'eclipse-catalogue::product',
+                                    extraFieldsBuilder: function (int $tenantId, string $tenantName) {
+                                        return [
+                                            Select::make("tenant_data.{$tenantId}.category_id")
+                                                ->label(__('eclipse-catalogue::product.fields.category_id'))
+                                                ->options(function () use ($tenantId) {
+                                                    return Category::query()
+                                                        ->withoutGlobalScopes()
+                                                        ->where(config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
+                                                        ->orderBy('name')
+                                                        ->pluck('name', 'id')
+                                                        ->toArray();
+                                                })
+                                                ->searchable()
+                                                ->preload()
+                                                ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
+                                            TextInput::make("tenant_data.{$tenantId}.sorting_label")
+                                                ->label(__('eclipse-catalogue::product.fields.sorting_label'))
+                                                ->maxLength(255),
+                                            \Filament\Forms\Components\DateTimePicker::make("tenant_data.{$tenantId}.available_from_date")
+                                                ->label(__('eclipse-catalogue::product.fields.available_from_date')),
+                                        ];
+                                    },
+                                    sectionTitle: __('eclipse-catalogue::product.sections.tenant_settings'),
+                                    sectionDescription: __('eclipse-catalogue::product.sections.tenant_settings_description'),
+                                ),
                             ]),
 
                         Tabs\Tab::make('Properties')
@@ -318,74 +371,6 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     })
                                     ->reactive()
                                     ->columns(2),
-                                            ->placeholder(__('eclipse-catalogue::product.placeholders.product_type')),
-
-                                        RichEditor::make('short_description')
-                                            ->columnSpanFull(),
-
-                                        RichEditor::make('description')
-                                            ->columnSpanFull(),
-                                    ]),
-
-                                Section::make(__('eclipse-catalogue::product.sections.additional'))
-                                    ->schema([
-                                        Select::make('origin_country_id')
-                                            ->label(__('eclipse-catalogue::product.fields.origin_country_id'))
-                                            ->relationship('originCountry', 'name')
-                                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->id} - {$record->name}")
-                                            ->searchable(['id', 'name'])
-                                            ->preload()
-                                            ->placeholder(__('eclipse-catalogue::product.placeholders.origin_country_id')),
-                                    ])
-                                    ->collapsible()
-                                    ->persistCollapsed(),
-
-                                Section::make(__('eclipse-catalogue::product.sections.seo'))
-                                    ->description(__('eclipse-catalogue::product.sections.seo_description'))
-                                    ->schema([
-                                        TextInput::make('meta_title')
-                                            ->label(__('eclipse-catalogue::product.fields.meta_title'))
-                                            ->maxLength(255)
-                                            ->placeholder(__('eclipse-catalogue::product.placeholders.meta_title')),
-
-                                        Textarea::make('meta_description')
-                                            ->label(__('eclipse-catalogue::product.fields.meta_description'))
-                                            ->rows(3)
-                                            ->placeholder(__('eclipse-catalogue::product.placeholders.meta_description')),
-                                    ])
-                                    ->collapsible()
-                                    ->persistCollapsed(),
-
-                                // Tenant settings (embedded in General tab)
-                                GenericTenantFieldsComponent::make(
-                                    tenantFlags: ['is_active', 'has_free_delivery'],
-                                    mutuallyExclusiveFlagSets: [],
-                                    translationPrefix: 'eclipse-catalogue::product',
-                                    extraFieldsBuilder: function (int $tenantId, string $tenantName) {
-                                        return [
-                                            Select::make("tenant_data.{$tenantId}.category_id")
-                                                ->label(__('eclipse-catalogue::product.fields.category_id'))
-                                                ->options(function () use ($tenantId) {
-                                                    return Category::query()
-                                                        ->withoutGlobalScopes()
-                                                        ->where(config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
-                                                        ->orderBy('name')
-                                                        ->pluck('name', 'id')
-                                                        ->toArray();
-                                                })
-                                                ->searchable()
-                                                ->preload()
-                                                ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
-                                            TextInput::make("tenant_data.{$tenantId}.sorting_label")
-                                                ->label(__('eclipse-catalogue::product.fields.sorting_label'))
-                                                ->maxLength(255),
-                                            \Filament\Forms\Components\DateTimePicker::make("tenant_data.{$tenantId}.available_from_date")
-                                                ->label(__('eclipse-catalogue::product.fields.available_from_date')),
-                                        ];
-                                    },
-                                    sectionTitle: __('eclipse-catalogue::product.sections.tenant_settings'),
-                                    sectionDescription: __('eclipse-catalogue::product.sections.tenant_settings_description'),
-                                ),
                             ]),
 
                         Tabs\Tab::make('Images')
