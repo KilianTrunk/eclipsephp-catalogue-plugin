@@ -7,6 +7,7 @@ use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Models\Category;
+use Eclipse\Catalogue\Models\Group;
 use Eclipse\Catalogue\Models\Product;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
@@ -18,9 +19,11 @@ use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -178,6 +181,20 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                 ->searchable()
                                                 ->preload()
                                                 ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
+                                            Select::make("tenant_data.{$tenantId}.groups")
+                                                ->label('Groups')
+                                                ->multiple()
+                                                ->options(function () use ($tenantId) {
+                                                    return Group::query()
+                                                        ->where(config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
+                                                        ->where('is_active', true)
+                                                        ->orderBy('name')
+                                                        ->pluck('name', 'id')
+                                                        ->toArray();
+                                                })
+                                                ->searchable()
+                                                ->preload()
+                                                ->helperText('Select groups for this tenant'),
                                             TextInput::make("tenant_data.{$tenantId}.sorting_label")
                                                 ->label(__('eclipse-catalogue::product.fields.sorting_label'))
                                                 ->maxLength(255),
@@ -261,6 +278,13 @@ class ProductResource extends Resource implements HasShieldPermissions
                 TextColumn::make('type.name')
                     ->label(__('eclipse-catalogue::product.table.columns.type')),
 
+                TextColumn::make('groups.name')
+                    ->label('Groups')
+                    ->badge()
+                    ->separator(',')
+                    ->limit(3)
+                    ->toggleable(),
+
                 IconColumn::make('is_active')
                     ->label(__('eclipse-catalogue::product.table.columns.is_active'))
                     ->boolean(),
@@ -335,6 +359,19 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label(__('eclipse-catalogue::product.fields.origin_country_id'))
                     ->multiple()
                     ->options(fn () => Country::query()->orderBy('name')->pluck('name', 'id')->toArray()),
+                SelectFilter::make('groups')
+                    ->label('Groups')
+                    ->multiple()
+                    ->relationship('groups', 'name', function ($query) {
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                        if ($currentTenant) {
+                            return $query->where($tenantFK, $currentTenant->id)
+                                ->where('is_active', true);
+                        }
+
+                        return $query->where('is_active', true);
+                    }),
                 TernaryFilter::make('is_active')
                     ->label(__('eclipse-catalogue::product.table.columns.is_active'))
                     ->queries(
@@ -377,6 +414,74 @@ class ProductResource extends Resource implements HasShieldPermissions
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('add_to_group')
+                        ->label('Add to Group')
+                        ->icon('heroicon-o-plus')
+                        ->form([
+                            Select::make('group_id')
+                                ->label('Group')
+                                ->options(function () {
+                                    $currentTenant = \Filament\Facades\Filament::getTenant();
+                                    $query = Group::query()->where('is_active', true);
+                                    if ($currentTenant) {
+                                        $query->where('site_id', $currentTenant->id);
+                                    }
+
+                                    return $query->pluck('name', 'id')->toArray();
+                                })
+                                ->required()
+                                ->searchable(),
+                        ])
+                        ->action(function (array $data, $records) {
+                            $group = Group::find($data['group_id']);
+                            $addedCount = 0;
+
+                            foreach ($records as $product) {
+                                if (! $group->hasProduct($product)) {
+                                    $group->addProduct($product);
+                                    $addedCount++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title("Added {$addedCount} products to group \"{$group->name}\"")
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('remove_from_group')
+                        ->label('Remove from Group')
+                        ->icon('heroicon-o-minus')
+                        ->form([
+                            Select::make('group_id')
+                                ->label('Group')
+                                ->options(function () {
+                                    $currentTenant = \Filament\Facades\Filament::getTenant();
+                                    $query = Group::query()->where('is_active', true);
+                                    if ($currentTenant) {
+                                        $query->where('site_id', $currentTenant->id);
+                                    }
+
+                                    return $query->pluck('name', 'id')->toArray();
+                                })
+                                ->required()
+                                ->searchable(),
+                        ])
+                        ->action(function (array $data, $records) {
+                            $group = Group::find($data['group_id']);
+                            $removedCount = 0;
+
+                            foreach ($records as $product) {
+                                if ($group->hasProduct($product)) {
+                                    $group->removeProduct($product);
+                                    $removedCount++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title("Removed {$removedCount} products from group \"{$group->name}\"")
+                                ->success()
+                                ->send();
+                        }),
                     DeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                     ForceDeleteBulkAction::make(),

@@ -91,6 +91,10 @@ class EditProduct extends EditRecord
                 'available_from_date' => $tenantRecord->available_from_date,
                 'sorting_label' => $tenantRecord->sorting_label,
                 'category_id' => $tenantRecord->category_id ?? null,
+                'groups' => $this->record->groups()
+                    ->where('pim_group.'.config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
+                    ->pluck('pim_group.id')
+                    ->toArray(),
             ];
         }
 
@@ -107,6 +111,33 @@ class EditProduct extends EditRecord
         $mainData = $this->cleanFormDataForMainRecord($data);
 
         $record->updateWithTenantData($mainData, $tenantData);
+
+        // Sync groups via Group model methods (weak pivot handling) using per-tenant selections
+        $state = $this->form->getState();
+        $tenantDataState = $state['tenant_data'] ?? [];
+        $desiredGroupIds = collect($tenantDataState)
+            ->flatMap(fn ($td) => array_map('intval', (array) ($td['groups'] ?? [])))
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $currentGroupIds = $record->groups()->pluck('pim_group.id')->map(fn ($id) => (int) $id)->toArray();
+        $toAttach = array_values(array_diff($desiredGroupIds, $currentGroupIds));
+        $toDetach = array_values(array_diff($currentGroupIds, $desiredGroupIds));
+
+        foreach ($toAttach as $groupId) {
+            $group = \Eclipse\Catalogue\Models\Group::find($groupId);
+            if ($group) {
+                $group->addProduct($record);
+            }
+        }
+
+        foreach ($toDetach as $groupId) {
+            $group = \Eclipse\Catalogue\Models\Group::find($groupId);
+            if ($group) {
+                $group->removeProduct($record);
+            }
+        }
 
         return $record;
     }
