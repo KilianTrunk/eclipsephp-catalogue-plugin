@@ -41,22 +41,23 @@ class GroupResource extends Resource implements HasShieldPermissions
             ->schema([
                 Section::make('Group Information')
                     ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(100),
+
                         TextInput::make('code')
                             ->required()
                             ->maxLength(50)
                             ->unique(ignoreRecord: true, modifyRuleUsing: function ($rule) {
                                 $currentTenant = \Filament\Facades\Filament::getTenant();
+                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
                                 if ($currentTenant) {
-                                    return $rule->where('site_id', $currentTenant->id);
+                                    return $rule->where($tenantFK, $currentTenant->id);
                                 }
 
                                 return $rule;
                             })
-                            ->helperText('Unique code for this group within the current site'),
-
-                        TextInput::make('name')
-                            ->required()
-                            ->maxLength(100),
+                            ->helperText('Unique code for this group within the current tenant'),
 
                         Toggle::make('is_active')
                             ->label('Active')
@@ -157,7 +158,8 @@ class GroupResource extends Resource implements HasShieldPermissions
 
         $currentTenant = \Filament\Facades\Filament::getTenant();
         if ($currentTenant) {
-            $query->where('site_id', $currentTenant->id);
+            $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+            $query->where($tenantFK, $currentTenant->id);
         }
 
         return $query;
