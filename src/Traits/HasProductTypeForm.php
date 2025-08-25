@@ -49,6 +49,7 @@ trait HasProductTypeForm
                 tenantFlags: ['is_active', 'is_default'],
                 mutuallyExclusiveFlagSets: [],
                 translationPrefix: 'eclipse-catalogue::product-type',
+                extraFieldsBuilder: null,
                 sectionTitle: __('eclipse-catalogue::product-type.sections.tenant_settings'),
                 sectionDescription: __('eclipse-catalogue::product-type.sections.tenant_settings_description')
             );
