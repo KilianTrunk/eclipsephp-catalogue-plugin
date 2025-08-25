@@ -2,11 +2,23 @@
 
 namespace Eclipse\Catalogue\Traits;
 
+/**
+ * Page-level helpers for Filament resources to handle per-tenant form state.
+ *
+ * Attach this trait to Filament Page classes (e.g., EditRecord/CreateRecord) and implement:
+ * - getFormTenantFlags(): returns the list of boolean flags used in the form.
+ * - getFormMutuallyExclusiveFlagSets(): returns sets of mutually exclusive flags.
+ *
+ * Responsibilities:
+ * - Persist the currently selected tenant's sub-state into a hidden all_tenant_data field.
+ * - Validate mutually exclusive constraints before saving.
+ * - Extract a complete tenant_data payload from the form (merging live state and stored snapshots).
+ * - Remove UI-only fields prior to persisting the base model.
+ */
 trait HandlesTenantData
 {
     /**
-     * Get the tenant flags for this form.
-     * Override this method in your page class to customize behavior.
+     * List of boolean flags used in the form (override in the page).
      */
     protected function getFormTenantFlags(): array
     {
@@ -14,8 +26,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Get the mutually exclusive flag sets for this form.
-     * Override this method in your page class to customize behavior.
+     * Sets of flags that cannot be true simultaneously (override in the page).
      */
     protected function getFormMutuallyExclusiveFlagSets(): array
     {
@@ -23,8 +34,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Persist the currently selected tenant's values into the hidden
-     * all_tenant_data state so switching tenants doesn't lose changes.
+     * Persist the selected tenant's sub-state into hidden all_tenant_data to survive tenant switches.
      */
     protected function storeCurrentTenantData(): void
     {
@@ -47,7 +57,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Validate default constraints before saving.
+     * Validate mutually exclusive constraints before saving.
      */
     protected function validateDefaultConstraintsBeforeSave(): void
     {
@@ -78,7 +88,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Get the first tenant ID that has validation errors.
+     * Return the first tenant ID that violates mutually exclusive sets (for UI focus).
      */
     private function getFirstErrorTenantId(array $tenantData): ?int
     {
@@ -95,7 +105,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Extract per-tenant data from the form state.
+     * Build the final tenant_data payload by merging stored snapshots with current live state.
      */
     protected function extractTenantDataFromFormData(array $data): array
     {
@@ -119,17 +129,19 @@ trait HandlesTenantData
         // Merge stored data with current form data
         $result = $storedTenantData;
 
-        // If we have a selected tenant, store its current form data
-        if ($selectedTenant && isset($currentTenantData[$selectedTenant])) {
-            $result[$selectedTenant] = $currentTenantData[$selectedTenant];
+        // If we have a selected tenant, merge current tenant form data OVER stored data
+        // to avoid dropping non-dehydrated keys (e.g., extra attributes) for the selected tenant.
+        if ($selectedTenant) {
+            $storedForSelected = $storedTenantData[$selectedTenant] ?? [];
+            $currentForSelected = $currentTenantData[$selectedTenant] ?? [];
+            $result[$selectedTenant] = array_merge($storedForSelected, $currentForSelected);
         }
 
         return $result;
     }
 
     /**
-     * Remove UI-only fields from the form values so we can safely pass
-     * the remaining payload to the base model.
+     * Strip UI-only fields from the form payload prior to saving the base model.
      */
     protected function cleanFormDataForMainRecord(array $data): array
     {
@@ -149,7 +161,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Validate tenant data constraints.
+     * Validate tenant data constraints; throws on conflicts.
      */
     protected function validateTenantDataConstraints(array $tenantData): void
     {
@@ -202,7 +214,7 @@ trait HandlesTenantData
     }
 
     /**
-     * Get default value for a specific flag.
+     * Default value for a specific flag (used when not provided).
      */
     protected function getDefaultValueForFlag(string $flag): bool
     {

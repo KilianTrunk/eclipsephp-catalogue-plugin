@@ -5,6 +5,24 @@ namespace Eclipse\Catalogue\Traits;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Adds per-tenant data behavior to an Eloquent model.
+ *
+ * How to use:
+ * - Add this trait to the base model (e.g., Product, PriceList, ProductType).
+ * - Define the following protected static properties on the model:
+ *   - $tenantDataRelation: string name of the hasMany relation method (e.g., 'productData').
+ *   - $tenantDataModel: class-string of the data model (e.g., ProductData::class).
+ *   - $tenantFlags: array of boolean field names stored per-tenant (e.g., ['is_active']).
+ *   - $mutuallyExclusiveFlagSets: array of string[] sets that cannot be true simultaneously.
+ *   - $uniqueFlagsPerTenant: array of flags that must be unique per tenant (others will be reset to false).
+ *   - $tenantAttributes: optional array of additional per-tenant, non-boolean fields (e.g., dates, strings).
+ *
+ * Responsibilities:
+ * - Exposes helpers to read/write per-tenant data for the current Filament tenant.
+ * - Enforces constraints (mutually exclusive flags, unique flags per tenant) during create/update.
+ * - Filters persisted payloads to only allow configured flags/attributes and respect data-model fillable.
+ */
 trait HasTenantScopedData
 {
     /**
@@ -30,7 +48,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the tenant data relation name from the model.
+     * Resolve the tenant data relation name from the model via its static configuration.
      */
     protected function getTenantDataRelationName(): string
     {
@@ -42,7 +60,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the tenant data model class from the model.
+     * Resolve the tenant data model class from the model via its static configuration.
      */
     protected function getTenantDataModelClass(): string
     {
@@ -54,7 +72,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the tenant flags from the model.
+     * Return boolean flag keys that are stored per tenant.
      */
     protected function getTenantFlags(): array
     {
@@ -66,7 +84,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the mutually exclusive flag sets from the model.
+     * Return sets of flags that cannot be simultaneously true.
      */
     protected function getMutuallyExclusiveFlagSets(): array
     {
@@ -78,7 +96,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the mutually exclusive flag sets from the model (static version).
+     * Static variant of mutually exclusive flag sets.
      */
     protected static function getStaticMutuallyExclusiveFlagSets(): array
     {
@@ -90,7 +108,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the unique flags per tenant from the model.
+     * Return flags that must be unique per tenant (others will be reset to false on update).
      */
     protected function getUniqueFlagsPerTenant(): array
     {
@@ -99,6 +117,43 @@ trait HasTenantScopedData
         $property->setAccessible(true);
 
         return $property->getValue() ?? [];
+    }
+
+    /**
+     * Return additional per-tenant attributes (non-boolean) to be stored alongside flags.
+     */
+    protected function getTenantAttributes(): array
+    {
+        $reflection = new \ReflectionClass(static::class);
+        if ($reflection->hasProperty('tenantAttributes')) {
+            $property = $reflection->getProperty('tenantAttributes');
+            $property->setAccessible(true);
+
+            return $property->getValue() ?? [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Filter a per-tenant payload to allowed keys and intersect with the data-model fillable.
+     */
+    protected function filterTenantDataForPersistence(array $tenantData): array
+    {
+        $tenantFlags = $this->getTenantFlags();
+        $tenantAttrs = $this->getTenantAttributes();
+        $allowedKeys = array_flip(array_merge($tenantFlags, $tenantAttrs));
+
+        // First pass: only keep allowed logical keys
+        $filtered = array_intersect_key($tenantData, $allowedKeys);
+
+        // Second pass: ensure only fillable keys for data model persist
+        $dataModelClass = $this->getTenantDataModelClass();
+        /** @var \Illuminate\Database\Eloquent\Model $dataModel */
+        $dataModel = new $dataModelClass;
+        $fillable = array_flip($dataModel->getFillable());
+
+        return array_intersect_key($filtered, $fillable);
     }
 
     /**
@@ -118,8 +173,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get per-tenant data for a specific tenant ID.
-     * If no tenantId provided, the current Filament tenant is used.
+     * Get per-tenant data for a specific tenant ID; defaults to current tenant when omitted.
      */
     public function getTenantData(?int $tenantId = null)
     {
@@ -134,7 +188,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Create dynamic accessors for tenant flags.
+     * Intercept attribute access for configured tenant flags and resolve from current tenant data.
      */
     public function getAttribute($key)
     {
@@ -147,7 +201,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Get the value of a tenant flag from current tenant data.
+     * Resolve a boolean flag value from current tenant data; defaults to false if absent.
      */
     protected function getTenantFlagValue(string $flag)
     {
@@ -156,9 +210,8 @@ trait HasTenantScopedData
         }
 
         $tenantData = $this->currentTenantData();
-        $default = in_array($flag, ['is_active']) ? true : false;
 
-        return $tenantData ? $tenantData->$flag : $default;
+        return $tenantData ? (bool) $tenantData->$flag : false;
     }
 
     /**
@@ -174,6 +227,8 @@ trait HasTenantScopedData
         if (! $tenantFK) {
             // No tenancy: create a single data row with provided or default flags
             $tenantFlags = $model->getTenantFlags();
+            $tenantAttrs = $model->getTenantAttributes();
+            $allowedKeys = array_merge($tenantFlags, $tenantAttrs);
             $singleTenantData = $tenantData ?: array_fill_keys($tenantFlags, true);
 
             // Set defaults for specific flags
@@ -182,6 +237,9 @@ trait HasTenantScopedData
                     $singleTenantData[$flag] = in_array($flag, ['is_active']) ? true : false;
                 }
             }
+
+            // Filter to allowed keys only and respect data model fillable
+            $singleTenantData = $model->filterTenantDataForPersistence($singleTenantData);
 
             // Enforce invariants
             $model->handleDefaultConstraints($singleTenantData, null);
@@ -206,6 +264,8 @@ trait HasTenantScopedData
 
             // Use provided data if available; otherwise apply safe defaults
             $tenantFlags = $model->getTenantFlags();
+            $tenantAttrs = $model->getTenantAttributes();
+            $allowedKeys = array_merge($tenantFlags, $tenantAttrs);
             $tenantSpecificData = $tenantData[$tenantId] ?? array_fill_keys($tenantFlags, false);
 
             // Set defaults for specific flags
@@ -214,6 +274,9 @@ trait HasTenantScopedData
                     $tenantSpecificData[$flag] = in_array($flag, ['is_active']) ? true : false;
                 }
             }
+
+            // Filter to allowed keys only and respect data model fillable
+            $tenantSpecificData = $model->filterTenantDataForPersistence($tenantSpecificData);
 
             // Enforce invariants for this tenant
             $model->handleDefaultConstraints($tenantSpecificData, $tenantId);
@@ -251,6 +314,9 @@ trait HasTenantScopedData
                 $dataModelClass = static::$tenantDataModel;
                 $relationKey = $this->getTenantDataRelation()->getForeignKeyName();
 
+                // Filter again to respect data model fillable
+                $tenantData = $this->filterTenantDataForPersistence($tenantData);
+
                 $dataModelClass::updateOrCreate(
                     [$relationKey => $this->id],
                     $tenantData
@@ -280,6 +346,9 @@ trait HasTenantScopedData
 
             $dataModelClass = $this->getTenantDataModelClass();
             $relationKey = $this->getTenantDataRelation()->getForeignKeyName();
+
+            // Filter again to respect data model fillable
+            $tenantSpecificData = $this->filterTenantDataForPersistence($tenantSpecificData);
 
             $dataModelClass::updateOrCreate(
                 [
@@ -337,7 +406,7 @@ trait HasTenantScopedData
     }
 
     /**
-     * Validate tenant data constraints before saving.
+     * Validate tenant data constraints prior to save; throws ValidationException on conflict.
      */
     public static function validateTenantDataConstraints(array $tenantData): void
     {
