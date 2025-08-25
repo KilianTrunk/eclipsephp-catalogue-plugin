@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('pim_group', function (Blueprint $table) {
             $table->id();
-            
+
             // Add foreign key for tenant if it's configured in the catalogue config
             if (config('eclipse-catalogue.tenancy.model')) {
                 $tenantClass = config('eclipse-catalogue.tenancy.model');
@@ -21,13 +21,13 @@ return new class extends Migration
                     ->cascadeOnUpdate()
                     ->cascadeOnDelete();
             }
-            
+
             $table->string('code', 50);
             $table->string('name', 100);
             $table->boolean('is_active')->default(true);
             $table->boolean('is_browsable')->default(false);
             $table->timestamps();
-            
+
             // Create unique index on tenant key and code
             if (config('eclipse-catalogue.tenancy.foreign_key')) {
                 $table->unique([config('eclipse-catalogue.tenancy.foreign_key'), 'code']);
