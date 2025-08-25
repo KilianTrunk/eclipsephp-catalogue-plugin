@@ -283,7 +283,20 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->badge()
                     ->separator(',')
                     ->limit(3)
-                    ->toggleable(),
+                    ->toggleable()
+                    ->getStateUsing(function (Product $record) {
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+
+                        if ($currentTenant) {
+                            return $record->groups()
+                                ->where($tenantFK, $currentTenant->id)
+                                ->pluck('name')
+                                ->toArray();
+                        }
+
+                        return $record->groups->pluck('name')->toArray();
+                    }),
 
                 IconColumn::make('is_active')
                     ->label(__('eclipse-catalogue::product.table.columns.is_active'))

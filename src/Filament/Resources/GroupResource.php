@@ -77,11 +77,11 @@ class GroupResource extends Resource implements HasShieldPermissions
     {
         return $table
             ->columns([
-                TextColumn::make('code')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('name')
+                TextColumn::make('code')
                     ->searchable()
                     ->sortable(),
 
