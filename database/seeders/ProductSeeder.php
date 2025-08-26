@@ -58,7 +58,7 @@ class ProductSeeder extends Seeder
                     $groupsToAdd = $this->determineGroupsForProduct($index, $tenantGroups);
 
                     foreach ($groupsToAdd as $group) {
-                        $product->groups()->attach($group->id, ['sort' => $group->getNextSortOrder()]);
+                        $group->addProduct($product);
                     }
                 }
             } else {
@@ -75,7 +75,7 @@ class ProductSeeder extends Seeder
                 $groups = Group::all();
                 $groupsToAdd = $this->determineGroupsForProduct($index, $groups);
                 foreach ($groupsToAdd as $group) {
-                    $product->groups()->attach($group->id, ['sort' => $group->getNextSortOrder()]);
+                    $group->addProduct($product);
                 }
             }
         }

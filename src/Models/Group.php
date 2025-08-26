@@ -16,7 +16,6 @@ class Group extends Model
     protected $table = 'pim_group';
 
     protected $fillable = [
-        'site_id',
         'code',
         'name',
         'is_active',
@@ -28,9 +27,18 @@ class Group extends Model
         'is_browsable' => 'boolean',
     ];
 
-    public function site(): BelongsTo
+    /**
+     * Include the tenant foreign key in fillable when tenancy is on.
+     */
+    public function getFillable(): array
     {
-        return $this->belongsTo(\Eclipse\Core\Models\Site::class);
+        $fillable = $this->fillable;
+
+        if (config('eclipse-catalogue.tenancy.foreign_key')) {
+            $fillable[] = config('eclipse-catalogue.tenancy.foreign_key');
+        }
+
+        return $fillable;
     }
 
     public function products(): BelongsToMany
@@ -131,5 +139,13 @@ class Group extends Model
     protected static function newFactory(): GroupFactory
     {
         return GroupFactory::new();
+    }
+
+    /** @return BelongsTo<self> */
+    public function site(): BelongsTo
+    {
+        $tenantModel = config('eclipse-catalogue.tenancy.model');
+
+        return $this->belongsTo($tenantModel);
     }
 }

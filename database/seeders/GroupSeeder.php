@@ -9,8 +9,10 @@ class GroupSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create different groups for each site
-        $sites = \Eclipse\Core\Models\Site::all();
+        // Create different groups for each tenant
+        $tenantModel = config('eclipse-catalogue.tenancy.model');
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        $sites = $tenantModel::all();
 
         // Define various group options
         $groupOptions = [
@@ -29,13 +31,13 @@ class GroupSeeder extends Seeder
         ];
 
         foreach ($sites as $site) {
-            // Randomly select 4-6 groups for each site
+            // Randomly select 4-6 groups for each tenant
             $numGroups = rand(4, 6);
             $selectedGroups = collect($groupOptions)->shuffle()->take($numGroups);
 
             foreach ($selectedGroups as $groupData) {
                 Group::create([
-                    'site_id' => $site->id,
+                    $tenantFK => $site->id,
                     'code' => $groupData['code'],
                     'name' => $groupData['name'],
                     'is_active' => true,

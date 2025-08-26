@@ -11,8 +11,10 @@ class GroupFactory extends Factory
 
     public function definition(): array
     {
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+
         return [
-            'site_id' => 1,
+            $tenantFK => null, // Will be set when creating
             'code' => $this->faker->unique()->slug(2),
             'name' => $this->faker->words(2, true),
             'is_active' => true,

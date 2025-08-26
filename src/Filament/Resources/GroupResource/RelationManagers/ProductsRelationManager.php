@@ -37,22 +37,50 @@ class ProductsRelationManager extends RelationManager
             )
             ->paginated(false)
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                Tables\Actions\Action::make('add_product')
                     ->label('Add product')
+                    ->icon('heroicon-o-plus')
                     ->modalHeading('Add Product to Group')
                     ->modalSubmitActionLabel('Add Product')
                     ->modalCancelActionLabel('Cancel')
-                    ->extraModalFooterActions(
-                        fn (Tables\Actions\AttachAction $action): array => [
-                            $action->makeModalSubmitAction('submitAnother', ['another' => true])
-                                ->label('Add & Add Another'),
-                        ]
-                    )
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
-                        $action->getRecordSelect()
+                    ->form([
+                        \Filament\Forms\Components\Select::make('product_id')
                             ->label('Select product')
-                            ->searchable(),
-                    ]),
+                            ->options(function () {
+                                $group = $this->getOwnerRecord();
+                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                                $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                                $query = \Eclipse\Catalogue\Models\Product::query();
+
+                                if ($currentTenant) {
+                                    $query->whereHas('productData', function ($q) use ($tenantFK, $currentTenant) {
+                                        $q->where($tenantFK, $currentTenant->id);
+                                    });
+                                }
+
+                                // Exclude products already in this group
+                                $existingProductIds = $group->products()->pluck('catalogue_products.id')->toArray();
+                                $query->whereNotIn('catalogue_products.id', $existingProductIds);
+
+                                return $query->pluck('name', 'id')->toArray();
+                            })
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $group = $this->getOwnerRecord();
+                        $product = \Eclipse\Catalogue\Models\Product::find($data['product_id']);
+
+                        if ($product && ! $group->hasProduct($product)) {
+                            $group->addProduct($product);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Product added to group')
+                                ->success()
+                                ->send();
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\Action::make('edit_product')
@@ -150,17 +178,53 @@ class ProductsRelationManager extends RelationManager
                                 : $reference->pivot->sort + 1000;
                         }
 
-                        $group->products()->updateExistingPivot($record->id, [
-                            'sort' => $newSort,
-                        ]);
+                        $group->updateProductSort($record, $newSort);
                     }),
 
-                Tables\Actions\DetachAction::make()
-                    ->label('Remove'),
+                Tables\Actions\Action::make('remove_product')
+                    ->label('Remove')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Remove Product from Group')
+                    ->modalDescription('Are you sure you want to remove this product from the group?')
+                    ->modalSubmitActionLabel('Remove Product')
+                    ->action(function ($record) {
+                        $group = $this->getOwnerRecord();
+                        $group->removeProduct($record);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Product removed from group')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()->label('Remove'),
+                    Tables\Actions\BulkAction::make('remove_products')
+                        ->label('Remove from Group')
+                        ->icon('heroicon-o-x-mark')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Remove Products from Group')
+                        ->modalDescription('Are you sure you want to remove the selected products from this group?')
+                        ->modalSubmitActionLabel('Remove Products')
+                        ->action(function ($records) {
+                            $group = $this->getOwnerRecord();
+                            $removedCount = 0;
+
+                            foreach ($records as $record) {
+                                if ($group->hasProduct($record)) {
+                                    $group->removeProduct($record);
+                                    $removedCount++;
+                                }
+                            }
+
+                            \Filament\Notifications\Notification::make()
+                                ->title("Removed {$removedCount} products from group")
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ]);
     }
