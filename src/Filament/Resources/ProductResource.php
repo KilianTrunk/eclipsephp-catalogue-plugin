@@ -154,13 +154,11 @@ class ProductResource extends Resource implements HasShieldPermissions
                                         TextInput::make('meta_title')
                                             ->label(__('eclipse-catalogue::product.fields.meta_title'))
                                             ->maxLength(255)
-                                            ->translatable()
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.meta_title')),
 
                                         Textarea::make('meta_description')
                                             ->label(__('eclipse-catalogue::product.fields.meta_description'))
                                             ->rows(3)
-                                            ->translatable()
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.meta_description')),
                                     ])
                                     ->collapsible()
@@ -197,8 +195,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     },
                                     sectionTitle: __('eclipse-catalogue::product.sections.tenant_settings'),
                                     sectionDescription: __('eclipse-catalogue::product.sections.tenant_settings_description'),
-                                )
-                                    ->defaultData(['is_active' => true]),
+                                ),
                             ]),
 
                         Tabs\Tab::make('Prices')
