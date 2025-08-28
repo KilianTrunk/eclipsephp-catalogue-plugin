@@ -433,16 +433,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                         ->form([
                             Select::make('group_id')
                                 ->label('Group')
-                                ->options(function () {
-                                    $currentTenant = \Filament\Facades\Filament::getTenant();
-                                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
-                                    $query = Group::query()->where('is_active', true);
-                                    if ($currentTenant) {
-                                        $query->where($tenantFK, $currentTenant->id);
-                                    }
-
-                                    return $query->pluck('name', 'id')->toArray();
-                                })
+                                ->options(fn () => Group::query()->active()->forCurrentTenant()->pluck('name', 'id')->toArray())
                                 ->required()
                                 ->searchable(),
                         ])
@@ -468,16 +459,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                         ->form([
                             Select::make('group_id')
                                 ->label('Group')
-                                ->options(function () {
-                                    $currentTenant = \Filament\Facades\Filament::getTenant();
-                                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
-                                    $query = Group::query()->where('is_active', true);
-                                    if ($currentTenant) {
-                                        $query->where($tenantFK, $currentTenant->id);
-                                    }
-
-                                    return $query->pluck('name', 'id')->toArray();
-                                })
+                                ->options(fn () => Group::query()->active()->forCurrentTenant()->pluck('name', 'id')->toArray())
                                 ->required()
                                 ->searchable(),
                         ])

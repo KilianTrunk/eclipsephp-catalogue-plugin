@@ -77,6 +77,8 @@ class EditProduct extends EditRecord
                 $data['category_id'] = $recordData->category_id ?? null;
             }
 
+            $data['groups'] = $this->record->groups()->pluck('pim_group.id')->toArray();
+
             return $data;
         }
 
@@ -114,12 +116,17 @@ class EditProduct extends EditRecord
 
         // Sync groups via Group model methods (weak pivot handling) using per-tenant selections
         $state = $this->form->getState();
-        $tenantDataState = $state['tenant_data'] ?? [];
-        $desiredGroupIds = collect($tenantDataState)
-            ->flatMap(fn ($td) => array_map('intval', (array) ($td['groups'] ?? [])))
-            ->unique()
-            ->values()
-            ->toArray();
+
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        if ($tenantFK) {
+            $desiredGroupIds = collect($tenantData)
+                ->flatMap(fn ($td) => array_map('intval', (array) ($td['groups'] ?? [])))
+                ->unique()
+                ->values()
+                ->toArray();
+        } else {
+            $desiredGroupIds = array_values(array_unique(array_map('intval', (array) ($state['groups'] ?? []))));
+        }
 
         $currentGroupIds = $record->groups()->pluck('pim_group.id')->map(fn ($id) => (int) $id)->toArray();
         $toAttach = array_values(array_diff($desiredGroupIds, $currentGroupIds));

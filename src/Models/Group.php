@@ -3,6 +3,7 @@
 namespace Eclipse\Catalogue\Models;
 
 use Eclipse\Catalogue\Factories\GroupFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,6 +27,29 @@ class Group extends Model
         'is_active' => 'boolean',
         'is_browsable' => 'boolean',
     ];
+
+    /**
+     * Scope: only active groups.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope: restrict by current tenant if tenancy is enabled and a tenant is selected.
+     */
+    public function scopeForCurrentTenant(Builder $query): Builder
+    {
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenantFK && $tenant) {
+            $query->where($tenantFK, $tenant->id);
+        }
+
+        return $query;
+    }
 
     /**
      * Include the tenant foreign key in fillable when tenancy is on.

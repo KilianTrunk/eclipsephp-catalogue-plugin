@@ -22,15 +22,17 @@ return new class extends Migration
                     ->cascadeOnDelete();
             }
 
-            $table->string('code', 50);
+            $table->string('code', 50)->nullable();
             $table->string('name', 100);
             $table->boolean('is_active')->default(true);
             $table->boolean('is_browsable')->default(false);
             $table->timestamps();
 
-            // Create unique index on tenant key and code
+            // Create unique index on code
             if (config('eclipse-catalogue.tenancy.foreign_key')) {
                 $table->unique([config('eclipse-catalogue.tenancy.foreign_key'), 'code']);
+            } else {
+                $table->unique('code');
             }
         });
     }

@@ -9,12 +9,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pim_group_has_product', function (Blueprint $table) {
-            $table->unsignedBigInteger('product_id');
-            $table->unsignedBigInteger('group_id');
+            $table->foreignId('product_id')
+                ->constrained('catalogue_products', 'id')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
+            $table->foreignId('group_id')
+                ->constrained('pim_group', 'id')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
             $table->integer('sort')->nullable();
+
             $table->primary(['product_id', 'group_id']);
-            $table->foreign('product_id')->references('id')->on('catalogue_products')->onDelete('cascade');
-            $table->foreign('group_id')->references('id')->on('pim_group')->onDelete('cascade');
         });
     }
 

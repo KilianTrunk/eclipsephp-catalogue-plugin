@@ -55,15 +55,36 @@ class CreateProduct extends CreateRecord
         /** @var Product $product */
         $product = $this->record;
 
-        // Attach groups per-tenant from tenant_data.*.groups selections
         $state = $this->form->getState();
         $tenantData = $state['tenant_data'] ?? [];
-        foreach ($tenantData as $tenantId => $data) {
-            $groupIds = array_filter(array_map('intval', (array) ($data['groups'] ?? [])));
-            foreach ($groupIds as $groupId) {
-                $group = \Eclipse\Catalogue\Models\Group::find($groupId);
-                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
-                if ($group && (int) $group->getAttribute($tenantFK) === (int) $tenantId) {
+
+        $isTenancyEnabled = (bool) config('eclipse-catalogue.tenancy.model');
+        if ($isTenancyEnabled) {
+            foreach ($tenantData as $tenantId => $data) {
+                $groupIds = array_filter(array_map('intval', (array) ($data['groups'] ?? [])));
+                foreach ($groupIds as $groupId) {
+                    $group = \Eclipse\Catalogue\Models\Group::find($groupId);
+                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                    if ($group && (int) $group->getAttribute($tenantFK) === (int) $tenantId) {
+                        $group->addProduct($product);
+                    }
+                }
+            }
+        } else {
+            $flatGroupIds = [];
+            if (isset($state['groups'])) {
+                $flatGroupIds = array_filter(array_map('intval', (array) $state['groups']));
+            } else {
+                foreach ($tenantData as $data) {
+                    foreach ((array) ($data['groups'] ?? []) as $id) {
+                        $flatGroupIds[] = (int) $id;
+                    }
+                }
+                $flatGroupIds = array_values(array_unique(array_filter($flatGroupIds)));
+            }
+
+            foreach ($flatGroupIds as $groupId) {
+                if ($group = \Eclipse\Catalogue\Models\Group::find($groupId)) {
                     $group->addProduct($product);
                 }
             }
