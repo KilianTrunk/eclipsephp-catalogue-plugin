@@ -36,26 +36,29 @@ class ListPropertyValues extends ListRecords
             Actions\CreateAction::make()
                 ->modalWidth('lg')
                 ->modalHeading(__('eclipse-catalogue::property-value.modal.create_heading'))
-                ->form([
-                    \Filament\Forms\Components\TextInput::make('value')
-                        ->label(__('eclipse-catalogue::property-value.fields.value'))
-                        ->required()
-                        ->maxLength(255),
+                ->form(fn (\Filament\Forms\Form $form) => $form
+                    ->schema([
+                        \Filament\Forms\Components\TextInput::make('value')
+                            ->label(__('eclipse-catalogue::property-value.fields.value'))
+                            ->required()
+                            ->maxLength(255),
 
-                    \Filament\Forms\Components\TextInput::make('info_url')
-                        ->label(__('eclipse-catalogue::property-value.fields.info_url'))
-                        ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
-                        ->url()
-                        ->maxLength(255),
+                        \Filament\Forms\Components\TextInput::make('info_url')
+                            ->label(__('eclipse-catalogue::property-value.fields.info_url'))
+                            ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
+                            ->url()
+                            ->maxLength(255),
 
-                    \Filament\Forms\Components\FileUpload::make('image')
-                        ->label(__('eclipse-catalogue::property-value.fields.image'))
-                        ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
-                        ->image()
-                        ->nullable()
-                        ->disk('public')
-                        ->directory('property-values'),
-                ])
+                        \Filament\Forms\Components\FileUpload::make('image')
+                            ->label(__('eclipse-catalogue::property-value.fields.image'))
+                            ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
+                            ->image()
+                            ->nullable()
+                            ->disk('public')
+                            ->directory('property-values'),
+                    ])
+                    ->columns(1)
+                )
                 ->mutateFormDataUsing(function (array $data): array {
                     // Set the property_id from the request if available
                     if (request()->has('property')) {
@@ -79,7 +82,7 @@ class ListPropertyValues extends ListRecords
         if ($this->property) {
             return [
                 PropertyResource::getUrl('index') => __('eclipse-catalogue::property-value.pages.breadcrumbs.properties'),
-                null => $this->property->name,
+                PropertyResource::getUrl('edit', ['record' => $this->property]) => $this->property->name,
                 request()->url() => __('eclipse-catalogue::property-value.pages.breadcrumbs.list'),
             ];
         }

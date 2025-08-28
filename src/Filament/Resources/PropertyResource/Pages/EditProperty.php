@@ -14,6 +14,11 @@ class EditProperty extends EditRecord
 
     protected static string $resource = PropertyResource::class;
 
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

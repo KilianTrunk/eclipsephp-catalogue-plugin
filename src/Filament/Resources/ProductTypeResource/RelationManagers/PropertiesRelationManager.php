@@ -78,11 +78,17 @@ class PropertiesRelationManager extends RelationManager
                                 ->label('Add Property & Add Another'),
                         ]
                     )
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
-                        $action->getRecordSelect()
-                            ->options(Property::where('is_active', true)->pluck('name', 'id')->all())
-                            ->searchable(),
-                    ]),
+                    ->recordSelectOptionsQuery(function ($query) {
+                        $attachedIds = $this->getOwnerRecord()
+                            ->properties()
+                            ->pluck('pim_property.id');
+
+                        return $query
+                            ->where('is_active', true)
+                            ->whereNotIn('id', $attachedIds);
+                    })
+                    ->preloadRecordSelect()
+                    ->recordSelectSearchColumns(['name', 'code']),
             ])
             ->actions([
                 Tables\Actions\Action::make('edit_property')
@@ -92,12 +98,18 @@ class PropertiesRelationManager extends RelationManager
                     ->openUrlInNewTab(),
 
                 Tables\Actions\DetachAction::make()
-                    ->label('Remove'),
+                    ->label('Remove')
+                    ->modalHeading(fn ($record) => 'Remove '.($record->name ?? 'property'))
+                    ->modalSubmitActionLabel('Remove')
+                    ->modalCancelActionLabel('Cancel'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DetachBulkAction::make()
-                        ->label('Remove'),
+                        ->label('Remove')
+                        ->modalHeading('Remove selected')
+                        ->modalSubmitActionLabel('Remove')
+                        ->modalCancelActionLabel('Cancel'),
                 ]),
             ])
             ->defaultSort('pim_product_type_has_property.sort')

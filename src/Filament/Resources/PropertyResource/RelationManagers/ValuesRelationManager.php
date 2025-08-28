@@ -5,12 +5,15 @@ namespace Eclipse\Catalogue\Filament\Resources\PropertyResource\RelationManagers
 use Eclipse\Catalogue\Models\Property;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\RelationManagers\Concerns\Translatable;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 
 class ValuesRelationManager extends RelationManager
 {
+    use Translatable;
+
     protected static string $relationship = 'values';
 
     protected static ?string $recordTitleAttribute = 'value';
@@ -20,29 +23,48 @@ class ValuesRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\TextInput::make('value')
-                    ->label('Value')
+                    ->label(__('eclipse-catalogue::property-value.fields.value'))
                     ->required()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('info_url')
-                    ->label('Info URL')
-                    ->helperText('Optional "read more" link')
+                    ->label(__('eclipse-catalogue::property-value.fields.info_url'))
+                    ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
                     ->url()
                     ->maxLength(255),
 
                 Forms\Components\FileUpload::make('image')
-                    ->label('Image')
-                    ->helperText('Optional image for this value')
+                    ->label(__('eclipse-catalogue::property-value.fields.image'))
+                    ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
                     ->image()
+                    ->formatStateUsing(function ($state) {
+                        if (is_string($state) || $state === null) {
+                            return $state;
+                        }
+
+                        if (is_array($state)) {
+                            $locale = app()->getLocale();
+                            $byLocale = $state[$locale] ?? null;
+                            if (is_string($byLocale) && $byLocale !== '') {
+                                return $byLocale;
+                            }
+
+                            foreach ($state as $value) {
+                                if (is_string($value) && $value !== '') {
+                                    return $value;
+                                }
+                            }
+
+                            return null;
+                        }
+
+                        return null;
+                    })
+                    ->nullable()
                     ->disk('public')
                     ->directory('property-values'),
-
-                Forms\Components\TextInput::make('sort')
-                    ->label('Sort Order')
-                    ->numeric()
-                    ->default(0)
-                    ->helperText('Lower numbers appear first'),
-            ]);
+            ])
+            ->columns(1);
     }
 
     public function table(Table $table): Table
@@ -53,52 +75,65 @@ class ValuesRelationManager extends RelationManager
         $table = $table
             ->columns([
                 Tables\Columns\TextColumn::make('value')
-                    ->label('Value')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.value'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\ImageColumn::make('image')
-                    ->label('Image')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.image'))
                     ->disk('public')
                     ->size(40),
 
                 Tables\Columns\TextColumn::make('info_url')
-                    ->label('Info URL')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.info_url'))
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.products_count'))
                     ->counts('products'),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('eclipse-catalogue::property-value.table.columns.created_at'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
             ])
+            ->deferLoading()
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->modalWidth('lg')
+                    ->modalHeading(__('eclipse-catalogue::property-value.modal.create_heading')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->modalWidth('lg')
+                    ->modalHeading(__('eclipse-catalogue::property-value.modal.edit_heading')),
                 Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
 
         if ($property->enable_sorting) {
             $table = $table
-                ->bulkActions([
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ])
                 ->reorderable('sort')
-                ->defaultSort('sort');
+                ->defaultSort('sort')
+                ->reorderRecordsTriggerAction(
+                    fn (Tables\Actions\Action $action, bool $isReordering) => $action
+                        ->button()
+                        ->label($isReordering ? 'Disable reordering' : 'Enable reordering')
+                        ->icon($isReordering ? 'heroicon-o-x-mark' : 'heroicon-o-arrows-up-down')
+                        ->color($isReordering ? 'danger' : 'primary')
+                        ->extraAttributes(['class' => 'reorder-trigger'])
+                );
         } else {
-            $table = $table
-                ->bulkActions([
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ])
-                ->defaultSort('value');
+            $table = $table->defaultSort('value');
         }
 
         return $table;

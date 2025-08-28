@@ -28,51 +28,49 @@ class PropertyValueResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make(__('eclipse-catalogue::property-value.sections.value_information'))
-                    ->schema([
-                        Forms\Components\TextInput::make('value')
-                            ->label(__('eclipse-catalogue::property-value.fields.value'))
-                            ->required()
-                            ->maxLength(255),
+                Forms\Components\TextInput::make('value')
+                    ->label(__('eclipse-catalogue::property-value.fields.value'))
+                    ->required()
+                    ->maxLength(255),
 
-                        Forms\Components\TextInput::make('info_url')
-                            ->label(__('eclipse-catalogue::property-value.fields.info_url'))
-                            ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
-                            ->url()
-                            ->maxLength(255),
+                Forms\Components\TextInput::make('info_url')
+                    ->label(__('eclipse-catalogue::property-value.fields.info_url'))
+                    ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
+                    ->url()
+                    ->maxLength(255),
 
-                        Forms\Components\FileUpload::make('image')
-                            ->label(__('eclipse-catalogue::property-value.fields.image'))
-                            ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
-                            ->image()
-                            ->formatStateUsing(function ($state) {
-                                if (is_string($state) || $state === null) {
-                                    return $state;
+                Forms\Components\FileUpload::make('image')
+                    ->label(__('eclipse-catalogue::property-value.fields.image'))
+                    ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
+                    ->image()
+                    ->formatStateUsing(function ($state) {
+                        if (is_string($state) || $state === null) {
+                            return $state;
+                        }
+
+                        if (is_array($state)) {
+                            $locale = app()->getLocale();
+                            $byLocale = $state[$locale] ?? null;
+                            if (is_string($byLocale) && $byLocale !== '') {
+                                return $byLocale;
+                            }
+
+                            foreach ($state as $value) {
+                                if (is_string($value) && $value !== '') {
+                                    return $value;
                                 }
+                            }
 
-                                if (is_array($state)) {
-                                    $locale = app()->getLocale();
-                                    $byLocale = $state[$locale] ?? null;
-                                    if (is_string($byLocale) && $byLocale !== '') {
-                                        return $byLocale;
-                                    }
+                            return null;
+                        }
 
-                                    foreach ($state as $value) {
-                                        if (is_string($value) && $value !== '') {
-                                            return $value;
-                                        }
-                                    }
-
-                                    return null;
-                                }
-
-                                return null;
-                            })
-                            ->nullable()
-                            ->disk('public')
-                            ->directory('property-values'),
-                    ]),
-            ]);
+                        return null;
+                    })
+                    ->nullable()
+                    ->disk('public')
+                    ->directory('property-values'),
+            ])
+            ->columns(1);
     }
 
     public static function table(Table $table): Table
