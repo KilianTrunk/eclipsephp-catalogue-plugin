@@ -13,6 +13,7 @@ return [
         'has_free_delivery' => 'Brezplačna dostava',
         'available_from_date' => 'Na voljo od',
         'sorting_label' => 'Oznaka za razvrščanje',
+        'category_id' => 'Kategorija',
     ],
 
     'placeholders' => [
@@ -20,6 +21,7 @@ return [
         'origin_country_id' => 'Izberi državo izvora',
         'meta_title' => 'SEO meta naslov',
         'meta_description' => 'SEO meta opis',
+        'category_id' => 'Izberi kategorijo (neobvezno)',
     ],
 
     'table' => [

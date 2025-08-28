@@ -13,6 +13,7 @@ return [
         'has_free_delivery' => 'Free Delivery',
         'available_from_date' => 'Available From',
         'sorting_label' => 'Sorting Label',
+        'category_id' => 'Category',
     ],
 
     'placeholders' => [
@@ -20,6 +21,7 @@ return [
         'origin_country_id' => 'Select country of origin',
         'meta_title' => 'SEO meta title',
         'meta_description' => 'SEO meta description',
+        'category_id' => 'Select category (optional)',
     ],
 
     'table' => [

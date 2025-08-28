@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Factories;
 
-use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -35,7 +34,6 @@ class ProductFactory extends Factory
                 'en' => $englishName,
                 'sl' => $slovenianName,
             ],
-            'category_id' => Category::inRandomOrder()->first()?->id ?? Category::factory(),
             'short_description' => [
                 'en' => $englishShortDesc,
                 'sl' => $slovenianShortDesc,

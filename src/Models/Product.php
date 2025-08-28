@@ -30,8 +30,8 @@ class Product extends Model implements HasMedia
         'net_weight',
         'gross_weight',
         'name',
-        'category_id',
         'product_type_id',
+        'category_id',
         'short_description',
         'description',
         'origin_country_id',
@@ -43,12 +43,16 @@ class Product extends Model implements HasMedia
         'name',
         'short_description',
         'description',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
         'name' => 'array',
         'short_description' => 'array',
         'description' => 'array',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
         'deleted_at' => 'datetime',
         'category_id' => 'integer',
         'product_type_id' => 'integer',
@@ -74,11 +78,11 @@ class Product extends Model implements HasMedia
 
     protected static array $uniqueFlagsPerTenant = [];
 
-    protected static array $tenantAttributes = ['sorting_label', 'available_from_date'];
+    protected static array $tenantAttributes = ['sorting_label', 'available_from_date', 'category_id'];
 
-    public function category(): BelongsTo
+    public function category(): ?Category
     {
-        return $this->belongsTo(Category::class);
+        return $this->currentTenantData()?->category;
     }
 
     public function type(): BelongsTo
@@ -89,6 +93,16 @@ class Product extends Model implements HasMedia
     public function originCountry(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'origin_country_id', 'id');
+    }
+
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->getTenantFlagValue('is_active');
+    }
+
+    public function getHasFreeDeliveryAttribute(): bool
+    {
+        return $this->getTenantFlagValue('has_free_delivery');
     }
 
     /**
@@ -105,16 +119,6 @@ class Product extends Model implements HasMedia
     public function prices(): HasMany
     {
         return $this->hasMany(\Eclipse\Catalogue\Models\Product\Price::class);
-    }
-
-    public function getIsActiveAttribute(): bool
-    {
-        return $this->getTenantFlagValue('is_active');
-    }
-
-    public function getHasFreeDeliveryAttribute(): bool
-    {
-        return $this->getTenantFlagValue('has_free_delivery');
     }
 
     public function getAvailableFromDateAttribute()
