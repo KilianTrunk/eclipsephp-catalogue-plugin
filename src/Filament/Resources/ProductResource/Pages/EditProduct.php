@@ -50,15 +50,21 @@ class EditProduct extends EditRecord
                 ->get();
 
             foreach ($properties as $property) {
-                $fieldName = "property_values_{$property->id}";
-                $selectedValues = $this->record->propertyValues()
-                    ->where('pim_property_value.property_id', $property->id)
-                    ->pluck('pim_property_value.id')
-                    ->toArray();
+                if ($property->isListType()) {
+                    $fieldName = "property_values_{$property->id}";
+                    $selectedValues = $this->record->propertyValues()
+                        ->where('pim_property_value.property_id', $property->id)
+                        ->pluck('pim_property_value.id')
+                        ->toArray();
 
-                $data[$fieldName] = ($property->max_values === 1)
-                    ? ($selectedValues[0] ?? null)
-                    : $selectedValues;
+                    $data[$fieldName] = ($property->max_values === 1)
+                        ? ($selectedValues[0] ?? null)
+                        : $selectedValues;
+                } else {
+                    $fieldName = "custom_property_{$property->id}";
+                    $customValue = $this->record->getCustomPropertyValue($property);
+                    $data[$fieldName] = $customValue ? $customValue->value : null;
+                }
             }
         }
 
@@ -102,7 +108,7 @@ class EditProduct extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         foreach (array_keys($data) as $key) {
-            if (str_starts_with($key, 'property_values_')) {
+            if (str_starts_with($key, 'property_values_') || str_starts_with($key, 'custom_property_')) {
                 unset($data[$key]);
             }
         }
@@ -139,6 +145,27 @@ class EditProduct extends EditRecord
 
                     if (! empty($valuesToAttach)) {
                         $this->record->propertyValues()->attach($valuesToAttach);
+                    }
+                }
+            }
+
+            $customPropertyData = [];
+            foreach ($state as $key => $value) {
+                if (is_string($key) && str_starts_with($key, 'custom_property_')) {
+                    $propertyId = str_replace('custom_property_', '', $key);
+                    $customPropertyData[$propertyId] = $value;
+                }
+            }
+
+            foreach ($customPropertyData as $propertyId => $value) {
+                $property = Property::find($propertyId);
+                if ($property && $property->isCustomType()) {
+                    if ($value !== null && $value !== '') {
+                        $this->record->setCustomPropertyValue($property, $value);
+                    } else {
+                        $this->record->customPropertyValues()
+                            ->where('property_id', $propertyId)
+                            ->delete();
                     }
                 }
             }
