@@ -89,6 +89,12 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(ProductType::class, 'product_type_id');
     }
 
+    public function propertyValues(): BelongsToMany
+    {
+        return $this->belongsToMany(PropertyValue::class, 'catalogue_product_has_property_value', 'product_id', 'property_value_id')
+            ->withTimestamps();
+    }
+
     public function originCountry(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'origin_country_id', 'id');

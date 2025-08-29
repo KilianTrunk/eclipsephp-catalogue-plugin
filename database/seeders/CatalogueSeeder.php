@@ -14,6 +14,7 @@ class CatalogueSeeder extends Seeder
         $this->call(CategorySeeder::class);
         $this->call(ProductTypeSeeder::class);
         $this->call(GroupSeeder::class);
+        $this->call(PropertySeeder::class);
         $this->call(ProductSeeder::class);
     }
 }
