@@ -72,7 +72,12 @@ class CreateProduct extends CreateRecord
             foreach ($customPropertyData as $propertyId => $value) {
                 $property = \Eclipse\Catalogue\Models\Property::find($propertyId);
                 if ($property && $property->isCustomType()) {
-                    if ($value !== null && $value !== '') {
+                    if ($property->supportsMultilang() && is_array($value)) {
+                        $filteredValue = array_filter($value, fn ($v) => $v !== null && $v !== '');
+                        if (! empty($filteredValue)) {
+                            $this->record->setCustomPropertyValue($property, $value);
+                        }
+                    } elseif ($value !== null && $value !== '') {
                         $this->record->setCustomPropertyValue($property, $value);
                     }
                 }

@@ -6,6 +6,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
+use Eclipse\Catalogue\Forms\Components\InlineTranslatableField;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
 use Eclipse\Catalogue\Models\Property;
@@ -372,12 +373,13 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                 switch ($property->input_type) {
                                                     case 'string':
                                                         if ($property->supportsMultilang()) {
-                                                            $schema[] = TextInput::make($fieldName)
+                                                            $schema[] = InlineTranslatableField::make($fieldName)
                                                                 ->label($property->name)
+                                                                ->type('string')
                                                                 ->maxLength(255)
                                                                 ->helperText($property->description)
                                                                 ->rules(['string', 'max:255'])
-                                                                ->translateLabel();
+                                                                ->getComponent();
                                                         } else {
                                                             $schema[] = TextInput::make($fieldName)
                                                                 ->label($property->name)
@@ -389,11 +391,13 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'text':
                                                         if ($property->supportsMultilang()) {
-                                                            $schema[] = RichEditor::make($fieldName)
+                                                            $schema[] = InlineTranslatableField::make($fieldName)
                                                                 ->label($property->name)
+                                                                ->type('text')
+                                                                ->maxLength(65535)
                                                                 ->helperText($property->description)
                                                                 ->rules(['string', 'max:65535'])
-                                                                ->translateLabel();
+                                                                ->getComponent();
                                                         } else {
                                                             $schema[] = RichEditor::make($fieldName)
                                                                 ->label($property->name)
@@ -435,20 +439,14 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'file':
                                                         if ($property->supportsMultilang()) {
-                                                            if ($property->max_values > 1) {
-                                                                $schema[] = \Filament\Forms\Components\FileUpload::make($fieldName)
-                                                                    ->label($property->name)
-                                                                    ->multiple()
-                                                                    ->helperText($property->description)
-                                                                    ->rules(['array', "max:{$property->max_values}"])
-                                                                    ->translateLabel();
-                                                            } else {
-                                                                $schema[] = \Filament\Forms\Components\FileUpload::make($fieldName)
-                                                                    ->label($property->name)
-                                                                    ->helperText($property->description)
-                                                                    ->rules(['file'])
-                                                                    ->translateLabel();
-                                                            }
+                                                            $schema[] = InlineTranslatableField::make($fieldName)
+                                                                ->label($property->name)
+                                                                ->type('file')
+                                                                ->multiple($property->max_values > 1)
+                                                                ->maxFiles($property->max_values)
+                                                                ->helperText($property->description)
+                                                                ->rules($property->max_values > 1 ? ['array', "max:{$property->max_values}"] : ['file'])
+                                                                ->getComponent();
                                                         } else {
                                                             if ($property->max_values > 1) {
                                                                 $schema[] = \Filament\Forms\Components\FileUpload::make($fieldName)
