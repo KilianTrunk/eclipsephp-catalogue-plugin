@@ -4,7 +4,8 @@ namespace Eclipse\Catalogue\Forms\Components;
 
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 
@@ -94,8 +95,13 @@ class InlineTranslatableField
 
     public function getComponent(): Component
     {
+        return $this->createTabsLayout();
+    }
+
+    protected function createTabsLayout(): Tabs
+    {
         $locales = $this->getAvailableLocales();
-        $components = [];
+        $tabs = [];
 
         foreach ($locales as $locale) {
             $fieldName = "{$this->name}.{$locale}";
@@ -108,10 +114,13 @@ class InlineTranslatableField
                 default => $this->createTextInputComponent($fieldName, $localePrefix),
             };
 
-            $components[] = $component;
+            $tabs[] = Tab::make($localePrefix)
+                ->label($localePrefix)
+                ->schema([$component]);
         }
 
-        return Group::make($components)
+        return Tabs::make($this->label)
+            ->tabs($tabs)
             ->columnSpanFull();
     }
 
