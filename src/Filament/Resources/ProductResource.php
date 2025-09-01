@@ -136,7 +136,9 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                         Select::make('tariff_code_id')
                                             ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
-                                            ->relationship('tariffCode', 'code')
+                                            ->relationship('tariffCode', 'code', function ($query) {
+                                                return $query->whereRaw('LENGTH(code) = 8');
+                                            })
                                             ->getOptionLabelFromRecordUsing(function (TariffCode $record) {
                                                 $name = $record->name;
                                                 if (is_array($name)) {
@@ -146,7 +148,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                 return $record->code.' — '.$name;
                                             })
-                                            ->searchable(['code'])
+                                            ->searchable(['code', 'name'])
                                             ->preload()
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.tariff_code_id')),
                                     ])
