@@ -215,6 +215,44 @@ class Product extends Model implements HasMedia
             ?? $this->getFirstMedia('images');
     }
 
+    /**
+     * Get the indexable data array for the model.
+     */
+    public function toSearchableArray(): array
+    {
+        $data = $this->createSearchableArray();
+
+        $customValues = $this->customPropertyValues()->with('property')->get();
+
+        foreach ($customValues as $customValue) {
+            $property = $customValue->property;
+            $value = $customValue->getFormattedValue();
+
+            if (empty($value)) {
+                continue;
+            }
+
+            $fieldPrefix = "custom_property_{$property->input_type}_";
+
+            if ($property->supportsMultilang()) {
+                $multilangValue = $customValue->value;
+                if (is_array($multilangValue)) {
+                    foreach ($multilangValue as $locale => $localeValue) {
+                        if (! empty($localeValue)) {
+                            $data["{$fieldPrefix}{$locale}"] = $localeValue;
+                        }
+                    }
+                } else {
+                    $data["{$fieldPrefix}default"] = $value;
+                }
+            } else {
+                $data["{$fieldPrefix}default"] = $value;
+            }
+        }
+
+        return $data;
+    }
+
     public static function getTypesenseSettings(): array
     {
         return [
@@ -254,7 +292,37 @@ class Product extends Model implements HasMedia
                         'optional' => true,
                     ],
                     [
-                        'name' => 'custom_property_values',
+                        'name' => 'custom_property_string_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'custom_property_text_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'custom_property_integer_.*',
+                        'type' => 'int64',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'custom_property_decimal_.*',
+                        'type' => 'float',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'custom_property_date_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'custom_property_datetime_.*',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
+                    [
+                        'name' => 'custom_property_file_.*',
                         'type' => 'string',
                         'optional' => true,
                     ],
@@ -272,7 +340,7 @@ class Product extends Model implements HasMedia
                     'name_*',
                     'short_description_*',
                     'description_*',
-                    'custom_property_values',
+                    'custom_property_*',
                 ]),
             ],
         ];

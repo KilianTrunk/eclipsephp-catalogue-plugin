@@ -4,6 +4,7 @@ namespace Eclipse\Catalogue\Filament\Resources;
 
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Enums\PropertyInputType;
+use Eclipse\Catalogue\Filament\Filters\CustomPropertyConstraint;
 use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
@@ -39,6 +40,7 @@ use Filament\Tables\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\QueryBuilder;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -651,25 +653,11 @@ class ProductResource extends Resource implements HasShieldPermissions
                         },
                     ),
 
-                // Custom Property Filter
-                SelectFilter::make('custom_property')
-                    ->label('Custom Property')
-                    ->options(function () {
-                        return Property::where('is_active', true)
-                            ->where('type', 'custom')
-                            ->pluck('name', 'id')
-                            ->toArray();
-                    })
-                    ->query(function (Builder $query, array $data) {
-                        $propertyId = $data['value'] ?? null;
-                        if (! $propertyId) {
-                            return;
-                        }
-
-                        return $query->whereHas('customPropertyValues', function ($q) use ($propertyId) {
-                            $q->where('property_id', $propertyId);
-                        });
-                    }),
+                QueryBuilder::make()
+                    ->label('Custom Properties')
+                    ->constraints([
+                        ...static::getCustomPropertyConstraints(),
+                    ]),
             ])
             ->actions([
                 ActionGroup::make([
@@ -721,7 +709,6 @@ class ProductResource extends Resource implements HasShieldPermissions
             'name',
             'short_description',
             'description',
-            'custom_property_values',
         ];
     }
 
@@ -793,5 +780,20 @@ class ProductResource extends Resource implements HasShieldPermissions
         }
 
         return $columns;
+    }
+
+    protected static function getCustomPropertyConstraints(): array
+    {
+        $constraints = [];
+        $customProperties = Property::where('is_active', true)
+            ->where('type', 'custom')
+            ->where('input_type', '!=', 'file')
+            ->get();
+
+        foreach ($customProperties as $property) {
+            $constraints[] = CustomPropertyConstraint::forProperty($property);
+        }
+
+        return $constraints;
     }
 }
