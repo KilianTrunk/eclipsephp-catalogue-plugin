@@ -2,6 +2,7 @@
 
 namespace Eclipse\Catalogue\Models;
 
+use Eclipse\Catalogue\Enums\PropertyInputType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -74,16 +75,16 @@ class CustomPropertyValue extends Model
         }
 
         switch ($inputType) {
-            case 'integer':
+            case PropertyInputType::INTEGER->value:
                 return (int) $value;
-            case 'decimal':
+            case PropertyInputType::DECIMAL->value:
                 return (float) $value;
-            case 'date':
-            case 'datetime':
+            case PropertyInputType::DATE->value:
+            case PropertyInputType::DATETIME->value:
                 return $value; // Keep as string for dates
-            case 'string':
-            case 'text':
-            case 'file':
+            case PropertyInputType::STRING->value:
+            case PropertyInputType::TEXT->value:
+            case PropertyInputType::FILE->value:
             default:
                 return (string) $value;
         }

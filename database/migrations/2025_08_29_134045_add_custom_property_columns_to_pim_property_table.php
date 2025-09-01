@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pim_property', function (Blueprint $table) {
-            $table->enum('type', ['list', 'custom'])->default('list')->after('is_filter');
-            $table->enum('input_type', ['string', 'text', 'integer', 'decimal', 'date', 'datetime', 'file'])->nullable()->after('type');
+            $table->string('type')->default('list')->after('is_filter');
+            $table->string('input_type')->nullable()->after('type');
             $table->boolean('is_multilang')->default(false)->after('input_type');
         });
     }

@@ -2,12 +2,16 @@
 
 namespace Eclipse\Catalogue\Forms\Components;
 
+use Closure;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
+use Filament\Support\Enums\IconPosition;
 
 class InlineTranslatableField
 {
@@ -95,6 +99,10 @@ class InlineTranslatableField
 
     public function getComponent(): Component
     {
+        if ($this->type === 'string') {
+            return $this->createVerticalLayout();
+        }
+
         return $this->createTabsLayout();
     }
 
@@ -108,7 +116,7 @@ class InlineTranslatableField
             $localePrefix = strtoupper($locale);
 
             $component = match ($this->type) {
-                'textarea', 'text' => $this->createTextareaComponent($fieldName, $localePrefix),
+                'textarea', 'text' => $this->createRichEditorComponent($fieldName, $localePrefix),
                 'file' => $this->createFileComponent($fieldName, $localePrefix),
                 'string' => $this->createTextInputComponent($fieldName, $localePrefix),
                 default => $this->createTextInputComponent($fieldName, $localePrefix),
@@ -116,12 +124,33 @@ class InlineTranslatableField
 
             $tabs[] = Tab::make($localePrefix)
                 ->label($localePrefix)
-                ->schema([$component]);
+                ->schema([$component])
+                ->icon($this->tabIconFor($fieldName))
+                ->iconPosition(IconPosition::After);
         }
 
         return Tabs::make($this->label)
             ->tabs($tabs)
             ->columnSpanFull();
+    }
+
+    protected function createVerticalLayout(): Section
+    {
+        $locales = $this->getAvailableLocales();
+        $components = [];
+
+        foreach ($locales as $locale) {
+            $fieldName = "{$this->name}.{$locale}";
+            $localePrefix = strtoupper($locale);
+
+            $component = $this->createTextInputComponent($fieldName, $localePrefix);
+            $components[] = $component;
+        }
+
+        return Section::make($this->label)
+            ->schema($components)
+            ->columnSpanFull()
+            ->compact();
     }
 
     protected function createTextInputComponent(string $fieldName, string $localePrefix): TextInput
@@ -146,12 +175,11 @@ class InlineTranslatableField
         return $component;
     }
 
-    protected function createTextareaComponent(string $fieldName, string $localePrefix): Textarea
+    protected function createRichEditorComponent(string $fieldName, string $localePrefix): RichEditor
     {
-        $component = Textarea::make($fieldName)
+        $component = RichEditor::make($fieldName)
             ->label($localePrefix.': '.$this->label)
-            ->required($this->required)
-            ->rows(3);
+            ->required($this->required);
 
         if ($this->maxLength) {
             $component->maxLength($this->maxLength);
@@ -187,6 +215,32 @@ class InlineTranslatableField
         }
 
         return $component;
+    }
+
+    protected function tabIconFor(string $fieldName): Closure
+    {
+        return fn (Get $get) => $this->valueHasMeaningfulContent($get($fieldName))
+            ? 'heroicon-o-check'
+            : null;
+    }
+
+    protected function valueHasMeaningfulContent(mixed $value): bool
+    {
+        if (is_array($value)) {
+            return count(array_filter($value, fn ($v) => ! blank($v))) > 0;
+        }
+
+        if (is_string($value)) {
+            $text = trim(
+                preg_replace('/\xc2\xa0|&nbsp;|\s+/u', ' ',
+                    strip_tags($value)
+                )
+            );
+
+            return $text !== '';
+        }
+
+        return filled($value);
     }
 
     /**

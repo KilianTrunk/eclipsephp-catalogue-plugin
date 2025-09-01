@@ -3,6 +3,7 @@
 namespace Eclipse\Catalogue\Filament\Resources;
 
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Eclipse\Catalogue\Enums\PropertyInputType;
 use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
@@ -574,31 +575,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->numeric(3)
                     ->suffix(' kg'),
 
-                // Custom Property Columns
-                TextColumn::make('custom_properties')
-                    ->label('Custom Properties')
-                    ->getStateUsing(function (Product $record) {
-                        $customValues = $record->customPropertyValues()->with('property')->get();
-                        if ($customValues->isEmpty()) {
-                            return null;
-                        }
-
-                        $formattedValues = [];
-                        foreach ($customValues as $customValue) {
-                            $property = $customValue->property;
-                            $value = $customValue->getFormattedValue();
-                            if (! empty($value)) {
-                                $propertyName = is_array($property->name)
-                                    ? ($property->name[app()->getLocale()] ?? reset($property->name))
-                                    : $property->name;
-                                $formattedValues[] = "{$propertyName}: {$value}";
-                            }
-                        }
-
-                        return implode(', ', $formattedValues);
-                    })
-                    ->limit(50)
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ...static::getCustomPropertyColumns(),
             ])
             ->searchable()
             ->filters([
@@ -782,5 +759,39 @@ class ProductResource extends Resource implements HasShieldPermissions
             'force_delete',
             'force_delete_any',
         ];
+    }
+
+    protected static function getCustomPropertyColumns(): array
+    {
+        $customProperties = Property::where('type', 'custom')->get();
+        $columns = [];
+
+        foreach ($customProperties as $property) {
+            $propertyName = is_array($property->name)
+                ? ($property->name[app()->getLocale()] ?? reset($property->name))
+                : $property->name;
+
+            $columns[] = TextColumn::make("custom_property_{$property->id}")
+                ->label($propertyName)
+                ->getStateUsing(function (Product $record) use ($property) {
+                    $customValue = $record->customPropertyValues()->where('property_id', $property->id)->first();
+
+                    if (! $customValue) {
+                        return null;
+                    }
+
+                    $value = $customValue->getFormattedValue();
+
+                    if ($property->input_type === PropertyInputType::TEXT->value) {
+                        $value = strip_tags($value);
+                    }
+
+                    return $value;
+                })
+                ->limit(30)
+                ->toggleable(isToggledHiddenByDefault: true);
+        }
+
+        return $columns;
     }
 }
