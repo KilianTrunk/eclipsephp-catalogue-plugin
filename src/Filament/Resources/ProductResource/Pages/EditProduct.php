@@ -50,7 +50,7 @@ class EditProduct extends EditRecord
                 ->get();
 
             foreach ($properties as $property) {
-                if ($property->isListType()) {
+                if ($property->isListType() || $property->isColorType()) {
                     $fieldName = "property_values_{$property->id}";
                     $selectedValues = $this->record->propertyValues()
                         ->where('pim_property_value.property_id', $property->id)

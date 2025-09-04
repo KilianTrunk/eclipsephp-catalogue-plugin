@@ -147,6 +147,7 @@ class PropertyResource extends Resource implements HasShieldPermissions
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'list' => 'success',
+                        'color' => 'info',
                         'custom' => 'warning',
                         default => 'gray',
                     }),
@@ -202,6 +203,7 @@ class PropertyResource extends Resource implements HasShieldPermissions
                     ->label('Property Type')
                     ->options([
                         PropertyType::LIST->value => PropertyType::LIST->getLabel(),
+                        PropertyType::COLOR->value => PropertyType::COLOR->getLabel(),
                         PropertyType::CUSTOM->value => PropertyType::CUSTOM->getLabel(),
                     ]),
 
@@ -220,7 +222,7 @@ class PropertyResource extends Resource implements HasShieldPermissions
                         ->label(__('eclipse-catalogue::property.table.actions.values'))
                         ->icon('heroicon-o-list-bullet')
                         ->url(fn (Property $record): string => PropertyValueResource::getUrl('index', ['property' => $record->id]))
-                        ->visible(fn (Property $record): bool => $record->type === PropertyType::LIST->value),
+                        ->visible(fn (Property $record): bool => in_array($record->type, [PropertyType::LIST->value, PropertyType::COLOR->value], true)),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])->label('Actions'),
@@ -230,7 +232,7 @@ class PropertyResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->recordUrl(fn (Property $record): ?string => $record->type === PropertyType::LIST->value ? PropertyValueResource::getUrl('index', ['property' => $record->id]) : null)
+            ->recordUrl(fn (Property $record): ?string => in_array($record->type, [PropertyType::LIST->value, PropertyType::COLOR->value], true) ? PropertyValueResource::getUrl('index', ['property' => $record->id]) : null)
             ->defaultSort('name');
     }
 

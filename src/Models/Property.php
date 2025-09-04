@@ -90,7 +90,7 @@ class Property extends Model
     protected function validateTypeAndInputType(): void
     {
         if ($this->type && ! empty(trim($this->type))) {
-            $validTypes = [PropertyType::LIST->value, PropertyType::CUSTOM->value];
+            $validTypes = [PropertyType::LIST->value, PropertyType::COLOR->value, PropertyType::CUSTOM->value];
             if (! in_array($this->type, $validTypes)) {
                 throw new \InvalidArgumentException("Invalid type '{$this->type}'. Must be one of: ".implode(', ', $validTypes));
             }
@@ -149,6 +149,11 @@ class Property extends Model
     public function isListType(): bool
     {
         return $this->type === PropertyType::LIST->value;
+    }
+
+    public function isColorType(): bool
+    {
+        return $this->type === PropertyType::COLOR->value;
     }
 
     public function supportsMultilang(): bool
