@@ -38,53 +38,6 @@ class CreateProduct extends CreateRecord
         return $data;
     }
 
-    protected function afterCreate(): void
-    {
-        if ($this->record) {
-            $state = $this->form->getRawState();
-            $propertyData = [];
-            foreach ($state as $key => $value) {
-                if (is_string($key) && str_starts_with($key, 'property_values_')) {
-                    $propertyId = str_replace('property_values_', '', $key);
-                    $propertyData[$propertyId] = $value;
-                }
-            }
-
-            foreach ($propertyData as $propertyId => $values) {
-                if ($values) {
-                    $valuesToAttach = is_array($values) ? $values : [$values];
-                    $valuesToAttach = array_filter($valuesToAttach);
-
-                    if (! empty($valuesToAttach)) {
-                        $this->record->propertyValues()->attach($valuesToAttach);
-                    }
-                }
-            }
-
-            $customPropertyData = [];
-            foreach ($state as $key => $value) {
-                if (is_string($key) && str_starts_with($key, 'custom_property_')) {
-                    $propertyId = str_replace('custom_property_', '', $key);
-                    $customPropertyData[$propertyId] = $value;
-                }
-            }
-
-            foreach ($customPropertyData as $propertyId => $value) {
-                $property = \Eclipse\Catalogue\Models\Property::find($propertyId);
-                if ($property && $property->isCustomType()) {
-                    if ($property->supportsMultilang() && is_array($value)) {
-                        $filteredValue = array_filter($value, fn ($v) => $v !== null && $v !== '');
-                        if (! empty($filteredValue)) {
-                            $this->record->setCustomPropertyValue($property, $value);
-                        }
-                    } elseif ($value !== null && $value !== '') {
-                        $this->record->setCustomPropertyValue($property, $value);
-                    }
-                }
-            }
-        }
-    }
-
     protected function getFormTenantFlags(): array
     {
         return ['is_active', 'has_free_delivery'];
@@ -137,6 +90,29 @@ class CreateProduct extends CreateRecord
 
                 if (! empty($valuesToAttach)) {
                     $product->propertyValues()->attach($valuesToAttach);
+                }
+            }
+        }
+
+        // Handle custom properties
+        $customPropertyData = [];
+        foreach ($rawState as $key => $value) {
+            if (is_string($key) && str_starts_with($key, 'custom_property_')) {
+                $propertyId = str_replace('custom_property_', '', $key);
+                $customPropertyData[$propertyId] = $value;
+            }
+        }
+
+        foreach ($customPropertyData as $propertyId => $value) {
+            $property = \Eclipse\Catalogue\Models\Property::find($propertyId);
+            if ($property && $property->isCustomType()) {
+                if ($property->supportsMultilang() && is_array($value)) {
+                    $filteredValue = array_filter($value, fn ($v) => $v !== null && $v !== '');
+                    if (! empty($filteredValue)) {
+                        $product->setCustomPropertyValue($property, $value);
+                    }
+                } elseif ($value !== null && $value !== '') {
+                    $product->setCustomPropertyValue($property, $value);
                 }
             }
         }
