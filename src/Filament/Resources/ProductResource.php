@@ -257,11 +257,14 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                 $fieldType = $property->getFormFieldType();
                                                 $fieldName = "property_values_{$property->id}";
+                                                $displayName = $property->internal_name ?: (is_array($property->name)
+                                                    ? ($property->name[app()->getLocale()] ?? reset($property->name))
+                                                    : $property->name);
 
                                                 switch ($fieldType) {
                                                     case 'radio':
                                                         $schema[] = Radio::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->options($valueOptions)
                                                             ->descriptions($property->values->pluck('info_url', 'id')->filter()->toArray())
                                                             ->helperText($property->description)
@@ -287,7 +290,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'select':
                                                         $schema[] = Select::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->options($valueOptions)
                                                             ->searchable()
                                                             ->createOptionForm([
@@ -313,7 +316,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'checkbox':
                                                         $schema[] = CheckboxList::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->options($valueOptions)
                                                             ->descriptions($property->values->pluck('info_url', 'id')->filter()->toArray())
                                                             ->helperText($property->description)
@@ -340,7 +343,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'multiselect':
                                                         $schema[] = Select::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->options($valueOptions)
                                                             ->multiple()
                                                             ->searchable()
@@ -372,12 +375,15 @@ class ProductResource extends Resource implements HasShieldPermissions
                                         foreach ($properties as $property) {
                                             if ($property->isCustomType()) {
                                                 $fieldName = "custom_property_{$property->id}";
+                                                $displayName = $property->internal_name ?: (is_array($property->name)
+                                                    ? ($property->name[app()->getLocale()] ?? reset($property->name))
+                                                    : $property->name);
 
                                                 switch ($property->input_type) {
                                                     case 'string':
                                                         if ($property->supportsMultilang()) {
                                                             $schema[] = InlineTranslatableField::make($fieldName)
-                                                                ->label($property->name)
+                                                                ->label($displayName)
                                                                 ->type('string')
                                                                 ->maxLength(255)
                                                                 ->helperText($property->description)
@@ -385,7 +391,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                                 ->getComponent();
                                                         } else {
                                                             $schema[] = TextInput::make($fieldName)
-                                                                ->label($property->name)
+                                                                ->label($displayName)
                                                                 ->maxLength(255)
                                                                 ->helperText($property->description)
                                                                 ->rules(['string', 'max:255']);
@@ -395,7 +401,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                     case 'text':
                                                         if ($property->supportsMultilang()) {
                                                             $schema[] = InlineTranslatableField::make($fieldName)
-                                                                ->label($property->name)
+                                                                ->label($displayName)
                                                                 ->type('text')
                                                                 ->maxLength(65535)
                                                                 ->helperText($property->description)
@@ -403,7 +409,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                                 ->getComponent();
                                                         } else {
                                                             $schema[] = RichEditor::make($fieldName)
-                                                                ->label($property->name)
+                                                                ->label($displayName)
                                                                 ->helperText($property->description)
                                                                 ->rules(['string', 'max:65535']);
                                                         }
@@ -411,7 +417,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'integer':
                                                         $schema[] = TextInput::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->numeric()
                                                             ->helperText($property->description)
                                                             ->rules(['integer']);
@@ -419,7 +425,7 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'decimal':
                                                         $schema[] = TextInput::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->numeric()
                                                             ->step(0.01)
                                                             ->helperText($property->description)
@@ -428,14 +434,14 @@ class ProductResource extends Resource implements HasShieldPermissions
 
                                                     case 'date':
                                                         $schema[] = \Filament\Forms\Components\DatePicker::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->helperText($property->description)
                                                             ->rules(['date']);
                                                         break;
 
                                                     case 'datetime':
                                                         $schema[] = \Filament\Forms\Components\DateTimePicker::make($fieldName)
-                                                            ->label($property->name)
+                                                            ->label($displayName)
                                                             ->helperText($property->description)
                                                             ->rules(['date']);
                                                         break;
@@ -443,7 +449,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                     case 'file':
                                                         if ($property->supportsMultilang()) {
                                                             $schema[] = InlineTranslatableField::make($fieldName)
-                                                                ->label($property->name)
+                                                                ->label($displayName)
                                                                 ->type('file')
                                                                 ->multiple($property->max_values > 1)
                                                                 ->maxFiles($property->max_values)
@@ -453,13 +459,13 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                         } else {
                                                             if ($property->max_values > 1) {
                                                                 $schema[] = \Filament\Forms\Components\FileUpload::make($fieldName)
-                                                                    ->label($property->name)
+                                                                    ->label($displayName)
                                                                     ->multiple()
                                                                     ->helperText($property->description)
                                                                     ->rules(['array', "max:{$property->max_values}"]);
                                                             } else {
                                                                 $schema[] = \Filament\Forms\Components\FileUpload::make($fieldName)
-                                                                    ->label($property->name)
+                                                                    ->label($displayName)
                                                                     ->helperText($property->description)
                                                                     ->rules(['file']);
                                                             }
@@ -754,9 +760,9 @@ class ProductResource extends Resource implements HasShieldPermissions
         $columns = [];
 
         foreach ($customProperties as $property) {
-            $propertyName = is_array($property->name)
+            $propertyName = $property->internal_name ?: (is_array($property->name)
                 ? ($property->name[app()->getLocale()] ?? reset($property->name))
-                : $property->name;
+                : $property->name);
 
             $columns[] = TextColumn::make("custom_property_{$property->id}")
                 ->label($propertyName)

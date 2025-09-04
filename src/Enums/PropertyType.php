@@ -14,11 +14,4 @@ enum PropertyType: string
             self::CUSTOM => 'Custom (User Input)',
         };
     }
-
-    public static function options(): array
-    {
-        return collect(self::cases())
-            ->mapWithKeys(fn (PropertyType $enum) => [$enum->value => $enum->getLabel()])
-            ->toArray();
-    }
 }

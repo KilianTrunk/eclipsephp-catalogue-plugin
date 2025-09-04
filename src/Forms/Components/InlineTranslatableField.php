@@ -5,8 +5,9 @@ namespace Eclipse\Catalogue\Forms\Components;
 use Closure;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\TextInput;
@@ -106,7 +107,7 @@ class InlineTranslatableField
         return $this->createTabsLayout();
     }
 
-    protected function createTabsLayout(): Tabs
+    protected function createTabsLayout(): Group
     {
         $locales = $this->getAvailableLocales();
         $tabs = [];
@@ -116,10 +117,10 @@ class InlineTranslatableField
             $localePrefix = strtoupper($locale);
 
             $component = match ($this->type) {
-                'textarea', 'text' => $this->createRichEditorComponent($fieldName, $localePrefix),
-                'file' => $this->createFileComponent($fieldName, $localePrefix),
-                'string' => $this->createTextInputComponent($fieldName, $localePrefix),
-                default => $this->createTextInputComponent($fieldName, $localePrefix),
+                'textarea', 'text' => $this->createRichEditorComponent($fieldName, $localePrefix, true),
+                'file' => $this->createFileComponent($fieldName, $localePrefix, true),
+                'string' => $this->createTextInputComponent($fieldName, $localePrefix, false, false),
+                default => $this->createTextInputComponent($fieldName, $localePrefix, false, false),
             };
 
             $tabs[] = Tab::make($localePrefix)
@@ -129,34 +130,42 @@ class InlineTranslatableField
                 ->iconPosition(IconPosition::After);
         }
 
-        return Tabs::make($this->label)
-            ->tabs($tabs)
+        return Group::make()
+            ->schema([
+                Placeholder::make('label_'.$this->name)
+                    ->label($this->label)
+                    ->content('')
+                    ->dehydrated(false),
+                Tabs::make($this->name.'_tabs')
+                    ->tabs($tabs)
+                    ->columnSpanFull(),
+            ])
             ->columnSpanFull();
     }
 
-    protected function createVerticalLayout(): Section
+    protected function createVerticalLayout(): Group
     {
         $locales = $this->getAvailableLocales();
         $components = [];
 
-        foreach ($locales as $locale) {
+        $total = count($locales);
+        foreach ($locales as $index => $locale) {
             $fieldName = "{$this->name}.{$locale}";
             $localePrefix = strtoupper($locale);
 
-            $component = $this->createTextInputComponent($fieldName, $localePrefix);
+            $component = $this->createTextInputComponent($fieldName, $localePrefix, $index === 0, $index === $total - 1);
             $components[] = $component;
         }
 
-        return Section::make($this->label)
+        return Group::make()
             ->schema($components)
-            ->columnSpanFull()
-            ->compact();
+            ->columnSpanFull();
     }
 
-    protected function createTextInputComponent(string $fieldName, string $localePrefix): TextInput
+    protected function createTextInputComponent(string $fieldName, string $localePrefix, bool $showLabel = false, bool $showHelperText = false): TextInput
     {
         $component = TextInput::make($fieldName)
-            ->label($this->label)
+            ->label($showLabel ? $this->label : false)
             ->prefix($localePrefix)
             ->required($this->required);
 
@@ -164,7 +173,7 @@ class InlineTranslatableField
             $component->maxLength($this->maxLength);
         }
 
-        if ($this->helperText) {
+        if ($this->helperText && $showHelperText) {
             $component->helperText($this->helperText);
         }
 
@@ -175,10 +184,10 @@ class InlineTranslatableField
         return $component;
     }
 
-    protected function createRichEditorComponent(string $fieldName, string $localePrefix): RichEditor
+    protected function createRichEditorComponent(string $fieldName, string $localePrefix, bool $suppressLabel = false): RichEditor
     {
         $component = RichEditor::make($fieldName)
-            ->label($localePrefix.': '.$this->label)
+            ->label($suppressLabel ? false : $localePrefix.': '.$this->label)
             ->required($this->required);
 
         if ($this->maxLength) {
@@ -196,10 +205,10 @@ class InlineTranslatableField
         return $component;
     }
 
-    protected function createFileComponent(string $fieldName, string $localePrefix): FileUpload
+    protected function createFileComponent(string $fieldName, string $localePrefix, bool $suppressLabel = false): FileUpload
     {
         $component = FileUpload::make($fieldName)
-            ->label($this->label.' ('.$localePrefix.')')
+            ->label($suppressLabel ? false : $this->label.' ('.$localePrefix.')')
             ->required($this->required);
 
         if ($this->multiple) {
@@ -220,7 +229,7 @@ class InlineTranslatableField
     protected function tabIconFor(string $fieldName): Closure
     {
         return fn (Get $get) => $this->valueHasMeaningfulContent($get($fieldName))
-            ? 'heroicon-o-check'
+            ? 'heroicon-s-check-circle'
             : null;
     }
 

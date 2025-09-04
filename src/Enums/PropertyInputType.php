@@ -25,13 +25,6 @@ enum PropertyInputType: string
         };
     }
 
-    public static function options(): array
-    {
-        return collect(self::cases())
-            ->mapWithKeys(fn (PropertyInputType $enum) => [$enum->value => $enum->getLabel()])
-            ->toArray();
-    }
-
     public function supportsMultilang(): bool
     {
         return in_array($this, [self::STRING, self::TEXT, self::FILE]);

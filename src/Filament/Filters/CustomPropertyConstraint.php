@@ -23,7 +23,10 @@ class CustomPropertyConstraint extends Constraint
     {
         $static = parent::make("custom_property_{$property->id}");
         $static->property = $property;
-        $static->label($property->name);
+        $label = $property->internal_name ?: (is_array($property->name)
+            ? ($property->name[app()->getLocale()] ?? reset($property->name))
+            : $property->name);
+        $static->label($label);
 
         return $static;
     }

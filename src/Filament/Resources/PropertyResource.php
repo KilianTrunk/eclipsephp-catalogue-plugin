@@ -66,14 +66,18 @@ class PropertyResource extends Resource implements HasShieldPermissions
 
                         Forms\Components\Select::make('type')
                             ->label('Property Type')
-                            ->options(PropertyType::options())
+                            ->options(fn () => collect(PropertyType::cases())
+                                ->mapWithKeys(fn (PropertyType $e) => [$e->value => $e->getLabel()])
+                                ->toArray())
                             ->default(PropertyType::LIST->value)
                             ->reactive()
                             ->required(),
 
                         Forms\Components\Select::make('input_type')
                             ->label('Input Type')
-                            ->options(PropertyInputType::options())
+                            ->options(fn () => collect(PropertyInputType::cases())
+                                ->mapWithKeys(fn (PropertyInputType $e) => [$e->value => $e->getLabel()])
+                                ->toArray())
                             ->visible(fn (Forms\Get $get) => $get('type') === PropertyType::CUSTOM->value)
                             ->required(fn (Forms\Get $get) => $get('type') === PropertyType::CUSTOM->value)
                             ->reactive(),

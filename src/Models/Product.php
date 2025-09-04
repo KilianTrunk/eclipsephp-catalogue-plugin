@@ -2,6 +2,7 @@
 
 namespace Eclipse\Catalogue\Models;
 
+use Eclipse\Catalogue\Enums\PropertyInputType;
 use Eclipse\Catalogue\Factories\ProductFactory;
 use Eclipse\Catalogue\Traits\HasTenantScopedData;
 use Eclipse\Common\Foundation\Models\IsSearchable;
@@ -172,9 +173,9 @@ class Product extends Model implements HasMedia
             $property = $customValue->property;
             $value = $customValue->getFormattedValue();
             if (! empty($value)) {
-                $propertyName = is_array($property->name)
+                $propertyName = $property->internal_name ?: (is_array($property->name)
                     ? ($property->name[app()->getLocale()] ?? reset($property->name))
-                    : $property->name;
+                    : $property->name);
                 $searchValues[] = "{$propertyName} {$value}";
             }
         }
@@ -226,27 +227,26 @@ class Product extends Model implements HasMedia
 
         foreach ($customValues as $customValue) {
             $property = $customValue->property;
-            $value = $customValue->getFormattedValue();
 
+            if (! $property || ! $property->isCustomType() || ! in_array($property->input_type, [PropertyInputType::STRING->value, PropertyInputType::TEXT->value])) {
+                continue;
+            }
+
+            $value = $customValue->getFormattedValue();
             if (empty($value)) {
                 continue;
             }
 
-            $fieldPrefix = "custom_property_{$property->input_type}_";
+            $codeKey = $property->code ?: (string) $property->id;
 
-            if ($property->supportsMultilang()) {
-                $multilangValue = $customValue->value;
-                if (is_array($multilangValue)) {
-                    foreach ($multilangValue as $locale => $localeValue) {
-                        if (! empty($localeValue)) {
-                            $data["{$fieldPrefix}{$locale}"] = $localeValue;
-                        }
+            if ($property->supportsMultilang() && is_array($customValue->value)) {
+                foreach ($customValue->value as $localeId => $localeValue) {
+                    if (! empty($localeValue)) {
+                        $data["cprop_{$codeKey}_{$localeId}"] = strip_tags($localeValue);
                     }
-                } else {
-                    $data["{$fieldPrefix}default"] = $value;
                 }
             } else {
-                $data["{$fieldPrefix}default"] = $value;
+                $data["cprop_{$codeKey}"] = strip_tags($value);
             }
         }
 
@@ -292,37 +292,7 @@ class Product extends Model implements HasMedia
                         'optional' => true,
                     ],
                     [
-                        'name' => 'custom_property_string_.*',
-                        'type' => 'string',
-                        'optional' => true,
-                    ],
-                    [
-                        'name' => 'custom_property_text_.*',
-                        'type' => 'string',
-                        'optional' => true,
-                    ],
-                    [
-                        'name' => 'custom_property_integer_.*',
-                        'type' => 'int64',
-                        'optional' => true,
-                    ],
-                    [
-                        'name' => 'custom_property_decimal_.*',
-                        'type' => 'float',
-                        'optional' => true,
-                    ],
-                    [
-                        'name' => 'custom_property_date_.*',
-                        'type' => 'string',
-                        'optional' => true,
-                    ],
-                    [
-                        'name' => 'custom_property_datetime_.*',
-                        'type' => 'string',
-                        'optional' => true,
-                    ],
-                    [
-                        'name' => 'custom_property_file_.*',
+                        'name' => 'cprop_.*',
                         'type' => 'string',
                         'optional' => true,
                     ],
@@ -340,7 +310,7 @@ class Product extends Model implements HasMedia
                     'name_*',
                     'short_description_*',
                     'description_*',
-                    'custom_property_*',
+                    'cprop_*',
                 ]),
             ],
         ];
