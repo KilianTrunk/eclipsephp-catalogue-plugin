@@ -5,6 +5,7 @@ namespace Eclipse\Catalogue\Filament\Resources;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
 use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
+use Eclipse\Catalogue\Filament\Tables\Actions\BulkUpdateProductsAction;
 use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Group;
@@ -24,11 +25,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Notifications\Notification;
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -610,58 +609,7 @@ class ProductResource extends Resource implements HasShieldPermissions
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    BulkAction::make('add_to_group')
-                        ->label('Add to Group')
-                        ->icon('heroicon-o-plus')
-                        ->form([
-                            Select::make('group_id')
-                                ->label('Group')
-                                ->options(fn () => Group::query()->active()->forCurrentTenant()->pluck('name', 'id')->toArray())
-                                ->required()
-                                ->searchable(),
-                        ])
-                        ->action(function (array $data, $records) {
-                            $group = Group::find($data['group_id']);
-                            $addedCount = 0;
-
-                            foreach ($records as $product) {
-                                if (! $group->hasProduct($product)) {
-                                    $group->addProduct($product);
-                                    $addedCount++;
-                                }
-                            }
-
-                            Notification::make()
-                                ->title("Added {$addedCount} products to group \"{$group->name}\"")
-                                ->success()
-                                ->send();
-                        }),
-                    BulkAction::make('remove_from_group')
-                        ->label('Remove from Group')
-                        ->icon('heroicon-o-minus')
-                        ->form([
-                            Select::make('group_id')
-                                ->label('Group')
-                                ->options(fn () => Group::query()->active()->forCurrentTenant()->pluck('name', 'id')->toArray())
-                                ->required()
-                                ->searchable(),
-                        ])
-                        ->action(function (array $data, $records) {
-                            $group = Group::find($data['group_id']);
-                            $removedCount = 0;
-
-                            foreach ($records as $product) {
-                                if ($group->hasProduct($product)) {
-                                    $group->removeProduct($product);
-                                    $removedCount++;
-                                }
-                            }
-
-                            Notification::make()
-                                ->title("Removed {$removedCount} products from group \"{$group->name}\"")
-                                ->success()
-                                ->send();
-                        }),
+                    BulkUpdateProductsAction::make(),
                     DeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                     ForceDeleteBulkAction::make(),
