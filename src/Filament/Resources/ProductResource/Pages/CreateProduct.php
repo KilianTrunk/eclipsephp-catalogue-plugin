@@ -56,6 +56,26 @@ class CreateProduct extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         $tenantData = $this->extractTenantDataFromFormData($data);
+        // Auto-assign default product status if missing
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        if (! $tenantFK) {
+            if (empty($tenantData['product_status_id'] ?? null)) {
+                $default = \Eclipse\Catalogue\Models\ProductStatus::query()->where('is_default', true)->orderBy('priority')->first();
+                if ($default) {
+                    $tenantData['product_status_id'] = $default->id;
+                }
+            }
+        } else {
+            foreach ($tenantData as $siteId => &$td) {
+                if (empty($td['product_status_id'] ?? null)) {
+                    $default = \Eclipse\Catalogue\Models\ProductStatus::query()->where($tenantFK, $siteId)->where('is_default', true)->orderBy('priority')->first();
+                    if ($default) {
+                        $td['product_status_id'] = $default->id;
+                    }
+                }
+            }
+            unset($td);
+        }
         $productData = $this->cleanFormDataForMainRecord($data);
 
         return Product::createWithTenantData($productData, $tenantData);

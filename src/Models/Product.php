@@ -77,7 +77,12 @@ class Product extends Model implements HasMedia
 
     protected static array $uniqueFlagsPerTenant = [];
 
-    protected static array $tenantAttributes = ['sorting_label', 'available_from_date', 'category_id'];
+    protected static array $tenantAttributes = ['sorting_label', 'available_from_date', 'category_id', 'product_status_id'];
+
+    public function status(): ?ProductStatus
+    {
+        return $this->currentTenantData()?->status;
+    }
 
     public function category(): ?Category
     {

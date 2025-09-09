@@ -9,6 +9,7 @@ use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Group;
 use Eclipse\Catalogue\Models\Product;
+use Eclipse\Catalogue\Models\ProductStatus;
 use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
@@ -174,6 +175,23 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                 ->searchable()
                                                 ->preload()
                                                 ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
+                                            Select::make("tenant_data.{$tenantId}.product_status_id")
+                                                ->label(__('eclipse-catalogue::product-status.singular'))
+                                                ->options(function () use ($tenantId) {
+                                                    $query = ProductStatus::query();
+                                                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                                                    if ($tenantFK) {
+                                                        $query->where($tenantFK, $tenantId);
+                                                    }
+
+                                                    return $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                                                        $title = is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
+
+                                                        return [$status->id => $title];
+                                                    })->toArray();
+                                                })
+                                                ->searchable()
+                                                ->preload(),
                                             Select::make("tenant_data.{$tenantId}.groups")
                                                 ->label('Groups')
                                                 ->multiple()
@@ -447,6 +465,43 @@ class ProductResource extends Resource implements HasShieldPermissions
                 TextColumn::make('name')
                     ->toggleable(false),
 
+                TextColumn::make('status')
+                    ->label(__('eclipse-catalogue::product-status.singular'))
+                    ->badge()
+                    ->getStateUsing(function (Product $record) {
+                        $tenantData = $record->currentTenantData();
+                        if (! $tenantData || ! $tenantData->product_status_id) {
+                            return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
+                        }
+
+                        $status = \Eclipse\Catalogue\Models\ProductStatus::find($tenantData->product_status_id);
+                        if (! $status) {
+                            return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
+                        }
+
+                        return is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
+                    })
+                    ->color(function (Product $record) {
+                        $tenantData = $record->currentTenantData();
+                        if (! $tenantData || ! $tenantData->product_status_id) {
+                            return 'gray';
+                        }
+                        $status = \Eclipse\Catalogue\Models\ProductStatus::find($tenantData->product_status_id);
+
+                        return $status?->label_type ?? 'gray';
+                    })
+                    ->extraAttributes(function (Product $record) {
+                        $tenantData = $record->currentTenantData();
+                        if (! $tenantData || ! $tenantData->product_status_id) {
+                            return [];
+                        }
+                        $status = \Eclipse\Catalogue\Models\ProductStatus::find($tenantData->product_status_id);
+
+                        return $status ? ['class' => \Eclipse\Catalogue\Support\LabelType::badgeClass($status->label_type)] : [];
+                    })
+                    ->searchable(false)
+                    ->sortable(false),
+
                 TextColumn::make('category')
                     ->label('Category')
                     ->getStateUsing(function (Product $record) {
@@ -511,6 +566,30 @@ class ProductResource extends Resource implements HasShieldPermissions
             ->searchable()
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('product_status_id')
+                    ->label(__('eclipse-catalogue::product-status.singular'))
+                    ->multiple()
+                    ->options(function () {
+                        return \Eclipse\Catalogue\Models\ProductStatus::query()->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                            $title = is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
+
+                            return [$status->id => $title];
+                        })->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        $selected = $data['values'] ?? ($data['value'] ?? null);
+                        if (empty($selected)) {
+                            return;
+                        }
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        $query->whereHas('productData', function ($q) use ($selected, $tenantFK, $currentTenant) {
+                            if ($tenantFK && $currentTenant) {
+                                $q->where($tenantFK, $currentTenant->id);
+                            }
+                            $q->whereIn('product_status_id', (array) $selected);
+                        });
+                    }),
                 SelectFilter::make('category_id')
                     ->label('Categories')
                     ->multiple()
