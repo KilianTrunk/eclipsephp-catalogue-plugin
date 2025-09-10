@@ -54,6 +54,7 @@ return [
     ],
 
     'price' => [
+        'tab' => 'Cene',
         'section' => 'Cenik izdelka',
         'list' => 'Cenik',
         'fields' => [
@@ -68,7 +69,7 @@ return [
         ],
         'validation' => [
             'unique_title' => 'Podvojen vnos cene',
-            'unique_body' => 'Cena z enakim cenikom, ceno in datumom "Velja od" že obstaja v obrazcu.',
+            'unique_body' => 'Cena za ta cenik z istim datumom "Velja od" že obstaja.',
         ],
     ],
 ];

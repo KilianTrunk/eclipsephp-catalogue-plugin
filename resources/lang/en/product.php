@@ -54,6 +54,7 @@ return [
     ],
 
     'price' => [
+        'tab' => 'Prices',
         'section' => 'Product price list',
         'list' => 'Price list',
         'fields' => [
@@ -68,7 +69,7 @@ return [
         ],
         'validation' => [
             'unique_title' => 'Duplicate price',
-            'unique_body' => 'A price with the same Price List, Price and Valid From already exists in the form.',
+            'unique_body' => 'A price for this price list with this "Valid from" date already exists.',
         ],
     ],
 ];

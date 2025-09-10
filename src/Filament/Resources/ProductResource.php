@@ -8,25 +8,21 @@ use Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Forms\Components\GenericTenantFieldsComponent;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Group;
-use Eclipse\Catalogue\Models\PriceList;
 use Eclipse\Catalogue\Models\Product;
 use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Eclipse\World\Models\Country;
-use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\View as ViewComponent;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
@@ -207,75 +203,11 @@ class ProductResource extends Resource implements HasShieldPermissions
                                 ),
                             ]),
 
-                        Tabs\Tab::make('Prices')
+                        Tabs\Tab::make(__('eclipse-catalogue::product.price.tab'))
+                            ->badge(fn (?Product $record) => $record?->prices()->count() ?? 0)
                             ->schema([
-                                Section::make(__('eclipse-catalogue::product.price.section'))
-                                    ->schema([
-                                        Repeater::make('prices')
-                                            ->hiddenLabel()
-                                            ->relationship('prices')
-                                            ->schema([
-                                                Hidden::make('id'),
-
-                                                Select::make('price_list_id')
-                                                    ->label(__('eclipse-catalogue::product.price.fields.price_list'))
-                                                    ->relationship('priceList', 'name')
-                                                    ->required()
-                                                    ->preload()
-                                                    ->searchable()
-                                                    ->live()
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if (! $state) {
-                                                            return;
-                                                        }
-                                                        $pl = PriceList::query()->select('id', 'tax_included')->find($state);
-                                                        if ($pl) {
-                                                            $set('tax_included', (bool) $pl->tax_included);
-                                                        }
-                                                    }),
-
-                                                TextInput::make('price')
-                                                    ->label(__('eclipse-catalogue::product.price.fields.price'))
-                                                    ->numeric()
-                                                    ->rule('decimal:0,5')
-                                                    ->required(),
-
-                                                Checkbox::make('tax_included')
-                                                    ->label(__('eclipse-catalogue::product.price.fields.tax_included'))
-                                                    ->inline(false)
-                                                    ->default(false),
-
-                                                DatePicker::make('valid_from')
-                                                    ->label(__('eclipse-catalogue::product.price.fields.valid_from'))
-                                                    ->native(false)
-                                                    ->required(),
-
-                                                DatePicker::make('valid_to')
-                                                    ->label(__('eclipse-catalogue::product.price.fields.valid_to'))
-                                                    ->native(false)
-                                                    ->nullable(),
-                                            ])
-                                            ->minItems(0)
-                                            ->reorderable(false)
-                                            ->columns(5)
-                                            ->createItemButtonLabel(__('eclipse-catalogue::product.price.actions.add'))
-                                            ->rule(function (Get $get) {
-                                                return function (string $attribute, $value, $fail) {
-                                                    $seen = [];
-                                                    foreach ($value as $row) {
-                                                        if (! $row['price_list_id'] || ! $row['valid_from']) {
-                                                            continue;
-                                                        }
-                                                        $key = $row['price_list_id'].'_'.$row['valid_from'];
-                                                        if (isset($seen[$key])) {
-                                                            $fail(__('eclipse-catalogue::product.price.validation.unique_body'));
-                                                        }
-                                                        $seen[$key] = true;
-                                                    }
-                                                };
-                                            }),
-                                    ])
-                                    ->compact(),
+                                ViewComponent::make('eclipse-catalogue::product.prices-table')
+                                    ->columnSpanFull(),
                             ]),
 
                         Tabs\Tab::make('Properties')
