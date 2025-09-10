@@ -102,6 +102,12 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(Country::class, 'origin_country_id', 'id');
     }
 
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(Group::class, 'pim_group_has_product', 'product_id', 'group_id')
+            ->withPivot('sort');
+    }
+
     public function getIsActiveAttribute(): bool
     {
         return $this->getTenantFlagValue('is_active');
