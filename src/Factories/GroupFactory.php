@@ -21,7 +21,7 @@ class GroupFactory extends Factory
         $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
 
         // Only include the tenant foreign key if it's a non-empty string
-        if (!empty($tenantFK)) {
+        if (! empty($tenantFK)) {
             $attributes[$tenantFK] = null; // Will be set when creating
         }
 
