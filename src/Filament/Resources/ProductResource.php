@@ -474,7 +474,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
                     ->getStateUsing(function (Product $record) {
                         $tariffCode = $record->tariffCode;
-                        if (!$tariffCode) {
+                        if (! $tariffCode) {
                             return null;
                         }
 
