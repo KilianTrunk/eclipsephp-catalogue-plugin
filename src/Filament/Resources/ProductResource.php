@@ -180,7 +180,6 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                 ->options(function () use ($tenantId) {
                                                     return Group::query()
                                                         ->where(config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
-                                                        ->where('is_active', true)
                                                         ->orderBy('name')
                                                         ->pluck('name', 'id')
                                                         ->toArray();
@@ -562,11 +561,10 @@ class ProductResource extends Resource implements HasShieldPermissions
                         $currentTenant = \Filament\Facades\Filament::getTenant();
                         $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
                         if ($currentTenant) {
-                            return $query->where($tenantFK, $currentTenant->id)
-                                ->where('is_active', true);
+                            return $query->where($tenantFK, $currentTenant->id);
                         }
 
-                        return $query->where('is_active', true);
+                        return $query;
                     }),
                 TernaryFilter::make('is_active')
                     ->label(__('eclipse-catalogue::product.table.columns.is_active'))
