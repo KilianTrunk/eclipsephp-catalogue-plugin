@@ -167,6 +167,17 @@ class Product extends Model implements HasMedia
             ?? $this->getFirstMedia('images');
     }
 
+    public function toSearchableArray(): array
+    {
+        $data = $this->createSearchableArray();
+
+        if ($this->tariffCode) {
+            $data['tariff_code'] = $this->tariffCode->code;
+        }
+
+        return $data;
+    }
+
     public static function getTypesenseSettings(): array
     {
         return [
@@ -210,6 +221,11 @@ class Product extends Model implements HasMedia
                         'type' => 'int32',
                         'optional' => true,
                     ],
+                    [
+                        'name' => 'tariff_code',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
                 ],
             ],
             'search-parameters' => [
@@ -219,6 +235,7 @@ class Product extends Model implements HasMedia
                     'name_*',
                     'short_description_*',
                     'description_*',
+                    'tariff_code',
                 ]),
             ],
         ];

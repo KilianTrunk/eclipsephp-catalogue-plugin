@@ -470,6 +470,27 @@ class ProductResource extends Resource implements HasShieldPermissions
                 TextColumn::make('originCountry.name')
                     ->label(__('eclipse-catalogue::product.fields.origin_country_id')),
 
+                TextColumn::make('tariffCode.code')
+                    ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
+                    ->getStateUsing(function (Product $record) {
+                        $tariffCode = $record->tariffCode;
+                        if (!$tariffCode) {
+                            return null;
+                        }
+
+                        $name = $tariffCode->name;
+                        if (is_array($name)) {
+                            $locale = app()->getLocale();
+                            $name = $name[$locale] ?? reset($name);
+                        }
+
+                        return $tariffCode->code.' — '.$name;
+                    })
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
+                    ->searchable()
+                    ->copyable(),
+
                 TextColumn::make('short_description')
                     ->words(5),
 
@@ -537,6 +558,28 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label(__('eclipse-catalogue::product.fields.origin_country_id'))
                     ->multiple()
                     ->options(fn () => Country::query()->orderBy('name')->pluck('name', 'id')->toArray()),
+
+                SelectFilter::make('tariff_code_id')
+                    ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
+                    ->multiple()
+                    ->options(function () {
+                        return TariffCode::query()
+                            ->whereRaw('LENGTH(code) = 8')
+                            ->orderBy('code')
+                            ->get()
+                            ->mapWithKeys(function ($tariffCode) {
+                                $name = $tariffCode->name;
+                                if (is_array($name)) {
+                                    $locale = app()->getLocale();
+                                    $name = $name[$locale] ?? reset($name);
+                                }
+
+                                return [$tariffCode->id => $tariffCode->code.' — '.$name];
+                            })
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->preload(),
                 TernaryFilter::make('is_active')
                     ->label(__('eclipse-catalogue::product.table.columns.is_active'))
                     ->queries(
@@ -614,14 +657,22 @@ class ProductResource extends Resource implements HasShieldPermissions
             'name',
             'short_description',
             'description',
+            'tariffCode.code',
+            'tariffCode.name',
         ];
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        return array_filter([
+        $details = [
             'Code' => $record->code,
-        ]);
+        ];
+
+        if ($record->tariffCode) {
+            $details['Tariff Code'] = $record->tariffCode->code;
+        }
+
+        return array_filter($details);
     }
 
     protected static function getPlaceholderImageUrl(): string
