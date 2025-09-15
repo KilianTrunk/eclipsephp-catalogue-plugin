@@ -456,7 +456,8 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                             $schema[] = RichEditor::make($fieldName)
                                                                 ->label($displayName)
                                                                 ->helperText($property->description)
-                                                                ->rules(['string', 'max:65535']);
+                                                                ->rules(['string', 'max:65535'])
+                                                                ->columnSpanFull();
                                                         }
                                                         break;
 

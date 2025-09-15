@@ -148,7 +148,10 @@ class InlineTranslatableField
                         'class' => 'gap-1',
                     ]),
             ])
-            ->columnSpanFull();
+            ->columnSpanFull()
+            ->extraAttributes([
+                'class' => 'translatable-field-container',
+            ]);
     }
 
     protected function createVerticalLayout(): Group
@@ -167,7 +170,8 @@ class InlineTranslatableField
 
         return Group::make()
             ->schema($components)
-            ->columnSpanFull();
+            ->columnSpanFull()
+            ->extraAttributes(['class' => 'translatable-field-container']);
     }
 
     protected function createTextInputComponent(string $fieldName, string $localePrefix, bool $showLabel = false, bool $showHelperText = false): TextInput
