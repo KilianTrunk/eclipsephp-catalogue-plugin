@@ -5,8 +5,6 @@ namespace Eclipse\Catalogue\Models;
 use Eclipse\Catalogue\Factories\ProductStatusFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 class ProductStatus extends Model
@@ -64,18 +62,6 @@ class ProductStatus extends Model
         ];
     }
 
-    /** @return BelongsTo<\Eclipse\Core\Models\Site, self> */
-    public function site(): BelongsTo
-    {
-        return $this->belongsTo(\Eclipse\Core\Models\Site::class);
-    }
-
-    /** @return HasMany<ProductData> */
-    public function productData(): HasMany
-    {
-        return $this->hasMany(ProductData::class, 'product_status_id');
-    }
-
     protected static function newFactory(): ProductStatusFactory
     {
         return ProductStatusFactory::new();
@@ -99,23 +85,6 @@ class ProductStatus extends Model
         });
 
         static::creating(function ($model) {
-            // Set default values if not provided
-            if (! isset($model->shown_in_browse)) {
-                $model->shown_in_browse = true;
-            }
-            if (! isset($model->allow_price_display)) {
-                $model->allow_price_display = true;
-            }
-            if (! isset($model->allow_sale)) {
-                $model->allow_sale = true;
-            }
-            if (! isset($model->is_default)) {
-                $model->is_default = false;
-            }
-            if (! isset($model->skip_stock_qty_check)) {
-                $model->skip_stock_qty_check = false;
-            }
-
             // Enforce allow_sale = false when allow_price_display = false
             if (! $model->allow_price_display) {
                 $model->allow_sale = false;

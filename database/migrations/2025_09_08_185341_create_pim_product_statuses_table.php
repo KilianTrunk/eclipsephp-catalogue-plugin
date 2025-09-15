@@ -20,7 +20,6 @@ return new class extends Migration
                     ->constrained($tenant->getTable(), $tenant->getKeyName())
                     ->cascadeOnUpdate()
                     ->cascadeOnDelete();
-                $table->index($tenantFk);
             }
 
             $table->string('code', 20);

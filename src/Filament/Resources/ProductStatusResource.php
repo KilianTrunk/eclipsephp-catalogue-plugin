@@ -55,6 +55,9 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
         return $form->schema([
             Section::make(__('eclipse-catalogue::product-status.singular'))
                 ->schema([
+                    TextInput::make('title')->label(__('eclipse-catalogue::product-status.fields.title'))
+                        ->helperText(__('eclipse-catalogue::product-status.help_text.title'))
+                        ->required()->maxLength(255),
                     Grid::make(3)->schema([
                         TextInput::make('code')->label(__('eclipse-catalogue::product-status.fields.code'))
                             ->helperText(__('eclipse-catalogue::product-status.help_text.code'))
@@ -89,9 +92,6 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
                             ->helperText(__('eclipse-catalogue::product-status.help_text.priority'))
                             ->numeric()->required(),
                     ]),
-                    TextInput::make('title')->label(__('eclipse-catalogue::product-status.fields.title'))
-                        ->helperText(__('eclipse-catalogue::product-status.help_text.title'))
-                        ->required()->maxLength(255),
                     Textarea::make('description')->label(__('eclipse-catalogue::product-status.fields.description'))
                         ->helperText(__('eclipse-catalogue::product-status.help_text.description'))
                         ->rows(3),
@@ -115,9 +115,11 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
                     \Filament\Forms\Components\Toggle::make('skip_stock_qty_check')->label(__('eclipse-catalogue::product-status.fields.skip_stock_qty_check'))
                         ->helperText(__('eclipse-catalogue::product-status.help_text.skip_stock_qty_check'))
                         ->default(false),
-                    TextInput::make('sd_item_availability')->label(__('eclipse-catalogue::product-status.fields.sd_item_availability'))
+                    Select::make('sd_item_availability')->label(__('eclipse-catalogue::product-status.fields.sd_item_availability'))
                         ->helperText(__('eclipse-catalogue::product-status.help_text.sd_item_availability'))
-                        ->maxLength(50)->required(),
+                        ->options(\Eclipse\Catalogue\Support\ItemAvailability::options())
+                        ->searchable()
+                        ->required(),
                 ]),
             ]),
         ]);

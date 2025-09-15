@@ -22,7 +22,17 @@ class ProductStatusFactory extends Factory
             'allow_sale' => $this->faker->boolean(85), // 85% chance of allowing sale
             'is_default' => false, // Default to false, can be overridden
             'priority' => $this->faker->numberBetween(1, 100),
-            'sd_item_availability' => $this->faker->randomElement(['InStock', 'OutOfStock', 'PreOrder', 'BackOrder']),
+            'sd_item_availability' => $this->faker->randomElement([
+                \Eclipse\Catalogue\Support\ItemAvailability::DISCONTINUED,
+                \Eclipse\Catalogue\Support\ItemAvailability::IN_STOCK,
+                \Eclipse\Catalogue\Support\ItemAvailability::IN_STORE_ONLY,
+                \Eclipse\Catalogue\Support\ItemAvailability::LIMITED_AVAILABILITY,
+                \Eclipse\Catalogue\Support\ItemAvailability::ONLINE_ONLY,
+                \Eclipse\Catalogue\Support\ItemAvailability::OUT_OF_STOCK,
+                \Eclipse\Catalogue\Support\ItemAvailability::PREORDER,
+                \Eclipse\Catalogue\Support\ItemAvailability::PRESALE,
+                \Eclipse\Catalogue\Support\ItemAvailability::SOLD_OUT,
+            ]),
             'skip_stock_qty_check' => $this->faker->boolean(20), // 20% chance of skipping stock check
         ];
     }

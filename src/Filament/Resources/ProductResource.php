@@ -499,11 +499,11 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->badge()
                     ->getStateUsing(function (Product $record) {
                         $tenantData = $record->currentTenantData();
-                        if (! $tenantData || ! $tenantData->product_status_id) {
+                        if (! $tenantData) {
                             return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
                         }
 
-                        $status = \Eclipse\Catalogue\Models\ProductStatus::find($tenantData->product_status_id);
+                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : $tenantData->status()->first();
                         if (! $status) {
                             return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
                         }
@@ -512,19 +512,19 @@ class ProductResource extends Resource implements HasShieldPermissions
                     })
                     ->color(function (Product $record) {
                         $tenantData = $record->currentTenantData();
-                        if (! $tenantData || ! $tenantData->product_status_id) {
+                        if (! $tenantData) {
                             return 'gray';
                         }
-                        $status = \Eclipse\Catalogue\Models\ProductStatus::find($tenantData->product_status_id);
+                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : $tenantData->status()->first();
 
                         return $status?->label_type ?? 'gray';
                     })
                     ->extraAttributes(function (Product $record) {
                         $tenantData = $record->currentTenantData();
-                        if (! $tenantData || ! $tenantData->product_status_id) {
+                        if (! $tenantData) {
                             return [];
                         }
-                        $status = \Eclipse\Catalogue\Models\ProductStatus::find($tenantData->product_status_id);
+                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : $tenantData->status()->first();
 
                         return $status ? ['class' => \Eclipse\Catalogue\Support\LabelType::badgeClass($status->label_type)] : [];
                     })
@@ -620,7 +620,14 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label(__('eclipse-catalogue::product-status.singular'))
                     ->multiple()
                     ->options(function () {
-                        return \Eclipse\Catalogue\Models\ProductStatus::query()->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                        $query = ProductStatus::query();
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        if ($tenantFK && $currentTenant) {
+                            $query->where($tenantFK, $currentTenant->id);
+                        }
+
+                        return $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
                             $title = is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
 
                             return [$status->id => $title];

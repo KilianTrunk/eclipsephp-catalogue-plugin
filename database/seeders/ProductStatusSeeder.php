@@ -25,12 +25,18 @@ class ProductStatusSeeder extends Seeder
             ];
 
             foreach ($defaults as $row) {
+                $availabilityMap = [
+                    'in_stock' => \Eclipse\Catalogue\Support\ItemAvailability::IN_STOCK,
+                    'out_of_stock' => \Eclipse\Catalogue\Support\ItemAvailability::OUT_OF_STOCK,
+                    'coming' => \Eclipse\Catalogue\Support\ItemAvailability::PREORDER,
+                ];
+
                 $data = array_merge([
                     'description' => null,
                     'shown_in_browse' => true,
                     'allow_price_display' => true,
                     'allow_sale' => true,
-                    'sd_item_availability' => 'in_stock',
+                    'sd_item_availability' => $availabilityMap[$row['code']] ?? \Eclipse\Catalogue\Support\ItemAvailability::IN_STOCK,
                     'skip_stock_qty_check' => false,
                 ], $row);
 

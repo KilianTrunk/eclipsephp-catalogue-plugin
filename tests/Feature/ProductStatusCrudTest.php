@@ -98,22 +98,3 @@ it('validates allow_sale is false when allow_price_display is false', function (
     expect($productStatus->allow_price_display)->toBeFalse();
     expect($productStatus->allow_sale)->toBeFalse();
 });
-
-it('can create product status with minimal required fields', function () {
-    $productStatus = ProductStatus::create([
-        'site_id' => $this->site->id,
-        'code' => 'minimal',
-        'title' => ['en' => 'Minimal'],
-        'label_type' => 'gray',
-        'priority' => 1,
-        'sd_item_availability' => 'InStock',
-    ]);
-
-    expect($productStatus)->toBeInstanceOf(ProductStatus::class);
-    expect($productStatus->description)->toBeNull();
-    expect($productStatus->shown_in_browse)->toBeTrue(); // Default
-    expect($productStatus->allow_price_display)->toBeTrue(); // Default
-    expect($productStatus->allow_sale)->toBeTrue(); // Default
-    expect($productStatus->is_default)->toBeFalse(); // Default
-    expect($productStatus->skip_stock_qty_check)->toBeFalse(); // Default
-});
