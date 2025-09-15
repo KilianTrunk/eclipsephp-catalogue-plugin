@@ -36,6 +36,7 @@ class Product extends Model implements HasMedia
         'short_description',
         'description',
         'origin_country_id',
+        'tariff_code_id',
         'meta_description',
         'meta_title',
     ];
@@ -55,7 +56,6 @@ class Product extends Model implements HasMedia
         'meta_title' => 'array',
         'meta_description' => 'array',
         'deleted_at' => 'datetime',
-        'category_id' => 'integer',
         'product_type_id' => 'integer',
         'available_from_date' => 'datetime',
         'is_active' => 'boolean',
@@ -102,6 +102,19 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(Country::class, 'origin_country_id', 'id');
     }
 
+    public function tariffCode(): BelongsTo
+    {
+        return $this->belongsTo(\Eclipse\World\Models\TariffCode::class, 'tariff_code_id');
+    }
+
+    /**
+     * Get all per-tenant data rows for this product.
+     */
+    public function productData(): HasMany
+    {
+        return $this->hasMany(ProductData::class, 'product_id');
+    }
+
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(Group::class, 'pim_group_has_product', 'product_id', 'group_id')
@@ -116,14 +129,6 @@ class Product extends Model implements HasMedia
     public function getHasFreeDeliveryAttribute(): bool
     {
         return $this->getTenantFlagValue('has_free_delivery');
-    }
-
-    /**
-     * Get all per-tenant data rows for this product.
-     */
-    public function productData(): HasMany
-    {
-        return $this->hasMany(ProductData::class, 'product_id');
     }
 
     /**
@@ -177,6 +182,17 @@ class Product extends Model implements HasMedia
             ?? $this->getFirstMedia('images');
     }
 
+    public function toSearchableArray(): array
+    {
+        $data = $this->createSearchableArray();
+
+        if ($this->tariffCode) {
+            $data['tariff_code'] = $this->tariffCode->code;
+        }
+
+        return $data;
+    }
+
     public static function getTypesenseSettings(): array
     {
         return [
@@ -220,6 +236,11 @@ class Product extends Model implements HasMedia
                         'type' => 'int32',
                         'optional' => true,
                     ],
+                    [
+                        'name' => 'tariff_code',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
                 ],
             ],
             'search-parameters' => [
@@ -229,6 +250,7 @@ class Product extends Model implements HasMedia
                     'name_*',
                     'short_description_*',
                     'description_*',
+                    'tariff_code',
                 ]),
             ],
         ];
