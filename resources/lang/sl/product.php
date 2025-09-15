@@ -54,4 +54,24 @@ return [
         'available_from_date' => 'Datum/čas, ko bo izdelek na voljo',
         'sorting_label' => 'Neobvezna oznaka, ki vpliva na razvrščanje v seznamih',
     ],
+
+    'price' => [
+        'tab' => 'Cene',
+        'section' => 'Cenik izdelka',
+        'list' => 'Cenik',
+        'fields' => [
+            'price_list' => 'Cenik',
+            'price' => 'Cena',
+            'tax_included' => 'Z DDV',
+            'valid_from' => 'Velja od',
+            'valid_to' => 'Velja do',
+        ],
+        'actions' => [
+            'add' => 'Dodaj ceno',
+        ],
+        'validation' => [
+            'unique_title' => 'Podvojen vnos cene',
+            'unique_body' => 'Cena za ta cenik z istim datumom "Velja od" že obstaja.',
+        ],
+    ],
 ];

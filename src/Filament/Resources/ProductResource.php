@@ -23,6 +23,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\View as ViewComponent;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
@@ -193,6 +194,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                 ->searchable()
                                                 ->preload()
                                                 ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
+
                                             Select::make("tenant_data.{$tenantId}.groups")
                                                 ->label('Groups')
                                                 ->multiple()
@@ -209,6 +211,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             TextInput::make("tenant_data.{$tenantId}.sorting_label")
                                                 ->label(__('eclipse-catalogue::product.fields.sorting_label'))
                                                 ->maxLength(255),
+
                                             \Filament\Forms\Components\DateTimePicker::make("tenant_data.{$tenantId}.available_from_date")
                                                 ->label(__('eclipse-catalogue::product.fields.available_from_date')),
                                         ];
@@ -216,6 +219,13 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     sectionTitle: __('eclipse-catalogue::product.sections.tenant_settings'),
                                     sectionDescription: __('eclipse-catalogue::product.sections.tenant_settings_description'),
                                 ),
+                            ]),
+
+                        Tabs\Tab::make(__('eclipse-catalogue::product.price.tab'))
+                            ->badge(fn (?Product $record) => $record?->prices()->count() ?? 0)
+                            ->schema([
+                                ViewComponent::make('eclipse-catalogue::product.prices-table')
+                                    ->columnSpanFull(),
                             ]),
 
                         Tabs\Tab::make('Properties')

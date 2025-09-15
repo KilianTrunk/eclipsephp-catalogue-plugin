@@ -32,6 +32,7 @@ class Product extends Model implements HasMedia
         'gross_weight',
         'name',
         'product_type_id',
+        'category_id',
         'short_description',
         'description',
         'origin_country_id',
@@ -128,6 +129,14 @@ class Product extends Model implements HasMedia
     public function getHasFreeDeliveryAttribute(): bool
     {
         return $this->getTenantFlagValue('has_free_delivery');
+    }
+
+    /**
+     * Prices relationship.
+     */
+    public function prices(): HasMany
+    {
+        return $this->hasMany(\Eclipse\Catalogue\Models\Product\Price::class);
     }
 
     public function getAvailableFromDateAttribute()
