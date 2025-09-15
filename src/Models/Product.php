@@ -35,6 +35,7 @@ class Product extends Model implements HasMedia
         'short_description',
         'description',
         'origin_country_id',
+        'tariff_code_id',
         'meta_description',
         'meta_title',
     ];
@@ -98,6 +99,11 @@ class Product extends Model implements HasMedia
     public function originCountry(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'origin_country_id', 'id');
+    }
+
+    public function tariffCode(): BelongsTo
+    {
+        return $this->belongsTo(\Eclipse\World\Models\TariffCode::class, 'tariff_code_id');
     }
 
     /**
@@ -167,6 +173,17 @@ class Product extends Model implements HasMedia
             ?? $this->getFirstMedia('images');
     }
 
+    public function toSearchableArray(): array
+    {
+        $data = $this->createSearchableArray();
+
+        if ($this->tariffCode) {
+            $data['tariff_code'] = $this->tariffCode->code;
+        }
+
+        return $data;
+    }
+
     public static function getTypesenseSettings(): array
     {
         return [
@@ -210,6 +227,11 @@ class Product extends Model implements HasMedia
                         'type' => 'int32',
                         'optional' => true,
                     ],
+                    [
+                        'name' => 'tariff_code',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
                 ],
             ],
             'search-parameters' => [
@@ -219,6 +241,7 @@ class Product extends Model implements HasMedia
                     'name_*',
                     'short_description_*',
                     'description_*',
+                    'tariff_code',
                 ]),
             ],
         ];
