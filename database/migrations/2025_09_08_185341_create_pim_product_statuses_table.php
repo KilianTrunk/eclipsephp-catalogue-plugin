@@ -22,7 +22,7 @@ return new class extends Migration
                     ->cascadeOnDelete();
             }
 
-            $table->string('code', 20);
+            $table->string('code', 20)->nullable();
             $table->json('title');
             $table->json('description')->nullable();
             $table->string('label_type', 50)->default('gray');

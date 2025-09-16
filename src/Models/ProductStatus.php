@@ -79,7 +79,7 @@ class ProductStatus extends Model
             }
 
             // Validate required fields
-            if (empty($model->code) || empty($model->title) || empty($model->label_type) || empty($model->priority) || empty($model->sd_item_availability)) {
+            if (empty($model->title) || empty($model->label_type) || empty($model->priority) || empty($model->sd_item_availability)) {
                 throw new \InvalidArgumentException('Required fields cannot be empty.');
             }
         });

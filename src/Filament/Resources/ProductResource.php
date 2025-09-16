@@ -503,7 +503,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                             return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
                         }
 
-                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : $tenantData->status()->first();
+                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : null;
                         if (! $status) {
                             return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
                         }
@@ -515,7 +515,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                         if (! $tenantData) {
                             return 'gray';
                         }
-                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : $tenantData->status()->first();
+                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : null;
 
                         return $status?->label_type ?? 'gray';
                     })
@@ -524,7 +524,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                         if (! $tenantData) {
                             return [];
                         }
-                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : $tenantData->status()->first();
+                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : null;
 
                         return $status ? ['class' => \Eclipse\Catalogue\Support\LabelType::badgeClass($status->label_type)] : [];
                     })
@@ -838,10 +838,23 @@ class ProductResource extends Resource implements HasShieldPermissions
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenantFK && $currentTenant) {
+            $query->with(['tenantData' => function ($q) use ($tenantFK, $currentTenant) {
+                $q->where($tenantFK, $currentTenant->id)->with('status');
+            }]);
+        } else {
+            $query->with(['productData.status']);
+        }
+
+        return $query;
     }
 
     public static function getGloballySearchableAttributes(): array

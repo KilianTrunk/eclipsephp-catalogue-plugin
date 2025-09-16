@@ -30,7 +30,7 @@ return [
         'allow_sale' => 'Ali se izdelki s tem statusom lahko kupijo (samodejno onemogočeno, če je prikaz cene izklopljen)',
         'is_default' => 'Nastavi kot privzeti status za nove izdelke',
         'priority' => 'Prioriteta statusa — manjše število je boljše. Uporabljeno pri samodejnem odločanju pri npr. primerjavi ponudbi dobaviteljev ali variant izdelka.',
-        'sd_item_availability' => 'Strukturirana vrednost razpoložljivosti izdelka — glej https://schema.org/ItemAvailability',
+        'sd_item_availability' => 'Strukturirana vrednost razpoložljivosti izdelka <a href="https://schema.org/ItemAvailability" target="_blank" rel="noopener">(več informacij)</a>',
         'skip_stock_qty_check' => 'Ko je naročanje omogočeno, ne preverjaj razpoložljivosti zaloge',
     ],
 

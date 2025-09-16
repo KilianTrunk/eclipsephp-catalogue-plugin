@@ -2,6 +2,7 @@
 
 namespace Eclipse\Catalogue\Factories;
 
+use Eclipse\Catalogue\Enums\StructuredData\ItemAvailability;
 use Eclipse\Catalogue\Models\ProductStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,15 +24,15 @@ class ProductStatusFactory extends Factory
             'is_default' => false, // Default to false, can be overridden
             'priority' => $this->faker->numberBetween(1, 100),
             'sd_item_availability' => $this->faker->randomElement([
-                \Eclipse\Catalogue\Support\ItemAvailability::DISCONTINUED,
-                \Eclipse\Catalogue\Support\ItemAvailability::IN_STOCK,
-                \Eclipse\Catalogue\Support\ItemAvailability::IN_STORE_ONLY,
-                \Eclipse\Catalogue\Support\ItemAvailability::LIMITED_AVAILABILITY,
-                \Eclipse\Catalogue\Support\ItemAvailability::ONLINE_ONLY,
-                \Eclipse\Catalogue\Support\ItemAvailability::OUT_OF_STOCK,
-                \Eclipse\Catalogue\Support\ItemAvailability::PREORDER,
-                \Eclipse\Catalogue\Support\ItemAvailability::PRESALE,
-                \Eclipse\Catalogue\Support\ItemAvailability::SOLD_OUT,
+                ItemAvailability::DISCONTINUED->value,
+                ItemAvailability::IN_STOCK->value,
+                ItemAvailability::IN_STORE_ONLY->value,
+                ItemAvailability::LIMITED_AVAILABILITY->value,
+                ItemAvailability::ONLINE_ONLY->value,
+                ItemAvailability::OUT_OF_STOCK->value,
+                ItemAvailability::PREORDER->value,
+                ItemAvailability::PRESALE->value,
+                ItemAvailability::SOLD_OUT->value,
             ]),
             'skip_stock_qty_check' => $this->faker->boolean(20), // 20% chance of skipping stock check
         ];

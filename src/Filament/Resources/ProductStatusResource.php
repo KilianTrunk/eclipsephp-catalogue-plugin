@@ -20,6 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class ProductStatusResource extends Resource implements HasShieldPermissions
 {
@@ -61,7 +62,7 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
                     Grid::make(3)->schema([
                         TextInput::make('code')->label(__('eclipse-catalogue::product-status.fields.code'))
                             ->helperText(__('eclipse-catalogue::product-status.help_text.code'))
-                            ->required()
+                            ->nullable()
                             ->maxLength(20)
                             ->unique(
                                 table: 'pim_product_statuses',
@@ -116,8 +117,8 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
                         ->helperText(__('eclipse-catalogue::product-status.help_text.skip_stock_qty_check'))
                         ->default(false),
                     Select::make('sd_item_availability')->label(__('eclipse-catalogue::product-status.fields.sd_item_availability'))
-                        ->helperText(__('eclipse-catalogue::product-status.help_text.sd_item_availability'))
-                        ->options(\Eclipse\Catalogue\Support\ItemAvailability::options())
+                        ->helperText(new HtmlString(__('eclipse-catalogue::product-status.help_text.sd_item_availability')))
+                        ->options(\Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::options())
                         ->searchable()
                         ->required(),
                 ]),

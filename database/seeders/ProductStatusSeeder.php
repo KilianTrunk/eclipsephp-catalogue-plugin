@@ -26,9 +26,9 @@ class ProductStatusSeeder extends Seeder
 
             foreach ($defaults as $row) {
                 $availabilityMap = [
-                    'in_stock' => \Eclipse\Catalogue\Support\ItemAvailability::IN_STOCK,
-                    'out_of_stock' => \Eclipse\Catalogue\Support\ItemAvailability::OUT_OF_STOCK,
-                    'coming' => \Eclipse\Catalogue\Support\ItemAvailability::PREORDER,
+                    'in_stock' => \Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::IN_STOCK->value,
+                    'out_of_stock' => \Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::OUT_OF_STOCK->value,
+                    'coming' => \Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::PREORDER->value,
                 ];
 
                 $data = array_merge([
@@ -36,7 +36,7 @@ class ProductStatusSeeder extends Seeder
                     'shown_in_browse' => true,
                     'allow_price_display' => true,
                     'allow_sale' => true,
-                    'sd_item_availability' => $availabilityMap[$row['code']] ?? \Eclipse\Catalogue\Support\ItemAvailability::IN_STOCK,
+                    'sd_item_availability' => $availabilityMap[$row['code']] ?? \Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::IN_STOCK->value,
                     'skip_stock_qty_check' => false,
                 ], $row);
 

@@ -30,7 +30,7 @@ return [
         'allow_sale' => 'Whether products with this status can be purchased (automatically disabled if price display is off)',
         'is_default' => 'Set as the default status for new products',
         'priority' => 'Status priority — lower number is better. Used for automatically deciding between e.g. supplier offers or product variants.',
-        'sd_item_availability' => 'Structured data item availability value — see https://schema.org/ItemAvailability',
+        'sd_item_availability' => 'Structured data item availability value <a href="https://schema.org/ItemAvailability" target="_blank" rel="noopener">(more info)</a>',
         'skip_stock_qty_check' => 'When ordering is possible, do not check if there is available stock',
     ],
 
