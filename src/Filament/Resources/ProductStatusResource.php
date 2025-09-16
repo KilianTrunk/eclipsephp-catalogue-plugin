@@ -118,7 +118,7 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
                         ->default(false),
                     Select::make('sd_item_availability')->label(__('eclipse-catalogue::product-status.fields.sd_item_availability'))
                         ->helperText(new HtmlString(__('eclipse-catalogue::product-status.help_text.sd_item_availability')))
-                        ->options(\Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::options())
+                        ->options(\Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::class)
                         ->searchable()
                         ->required(),
                 ]),

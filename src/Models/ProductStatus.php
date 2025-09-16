@@ -59,6 +59,7 @@ class ProductStatus extends Model
             'is_default' => 'boolean',
             'priority' => 'integer',
             'skip_stock_qty_check' => 'boolean',
+            'sd_item_availability' => \Eclipse\Catalogue\Enums\StructuredData\ItemAvailability::class,
         ];
     }
 

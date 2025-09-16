@@ -498,12 +498,20 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label(__('eclipse-catalogue::product-status.singular'))
                     ->badge()
                     ->getStateUsing(function (Product $record) {
-                        $tenantData = $record->currentTenantData();
-                        if (! $tenantData) {
-                            return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $status = null;
+
+                        if ($record->relationLoaded('productData')) {
+                            $row = $record->productData
+                                ->when($tenantFK && $currentTenant, fn ($c) => $c->where($tenantFK, $currentTenant->id))
+                                ->first();
+                            if ($row && $row->relationLoaded('status')) {
+                                $status = $row->status;
+                            }
                         }
 
-                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : null;
                         if (! $status) {
                             return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
                         }
@@ -511,20 +519,34 @@ class ProductResource extends Resource implements HasShieldPermissions
                         return is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
                     })
                     ->color(function (Product $record) {
-                        $tenantData = $record->currentTenantData();
-                        if (! $tenantData) {
-                            return 'gray';
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $status = null;
+                        if ($record->relationLoaded('productData')) {
+                            $row = $record->productData
+                                ->when($tenantFK && $currentTenant, fn ($c) => $c->where($tenantFK, $currentTenant->id))
+                                ->first();
+                            if ($row && $row->relationLoaded('status')) {
+                                $status = $row->status;
+                            }
                         }
-                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : null;
 
                         return $status?->label_type ?? 'gray';
                     })
                     ->extraAttributes(function (Product $record) {
-                        $tenantData = $record->currentTenantData();
-                        if (! $tenantData) {
-                            return [];
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $status = null;
+                        if ($record->relationLoaded('productData')) {
+                            $row = $record->productData
+                                ->when($tenantFK && $currentTenant, fn ($c) => $c->where($tenantFK, $currentTenant->id))
+                                ->first();
+                            if ($row && $row->relationLoaded('status')) {
+                                $status = $row->status;
+                            }
                         }
-                        $status = $tenantData->relationLoaded('status') ? $tenantData->status : null;
 
                         return $status ? ['class' => \Eclipse\Catalogue\Support\LabelType::badgeClass($status->label_type)] : [];
                     })
@@ -847,7 +869,7 @@ class ProductResource extends Resource implements HasShieldPermissions
         $currentTenant = \Filament\Facades\Filament::getTenant();
 
         if ($tenantFK && $currentTenant) {
-            $query->with(['tenantData' => function ($q) use ($tenantFK, $currentTenant) {
+            $query->with(['productData' => function ($q) use ($tenantFK, $currentTenant) {
                 $q->where($tenantFK, $currentTenant->id)->with('status');
             }]);
         } else {
