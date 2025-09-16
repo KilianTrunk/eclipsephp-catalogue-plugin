@@ -4,11 +4,16 @@ namespace Eclipse\Catalogue\Filament\Tables\Actions;
 
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Group;
+use Eclipse\Catalogue\Models\PriceList;
+use Eclipse\Catalogue\Models\ProductStatus;
 use Eclipse\Catalogue\Models\ProductType;
 use Eclipse\Catalogue\Services\ProductBulkUpdater;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\BulkAction;
@@ -29,6 +34,35 @@ class BulkUpdateProductsAction extends BulkAction
             ->icon('heroicon-o-wrench')
             ->deselectRecordsAfterCompletion()
             ->form([
+                Section::make('Product Status')
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        Toggle::make('update_product_status')
+                            ->label('Update product status')
+                            ->helperText('Select a product status to assign to selected products for the current tenant.'),
+                        Select::make('product_status_id')
+                            ->label(__('eclipse-catalogue::product-status.singular'))
+                            ->options(function () {
+                                $query = ProductStatus::query();
+                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                                $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                                if ($tenantFK && $currentTenant) {
+                                    $query->where($tenantFK, $currentTenant->id);
+                                }
+
+                                return $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                                    $title = is_array($status->title)
+                                        ? ($status->title[app()->getLocale()] ?? reset($status->title))
+                                        : $status->title;
+
+                                    return [$status->id => $title];
+                                })->toArray();
+                            })
+                            ->searchable()
+                            ->nullable(),
+                    ]),
                 Section::make('Product Type')
                     ->collapsible()
                     ->collapsed()
@@ -102,13 +136,69 @@ class BulkUpdateProductsAction extends BulkAction
                         Select::make('groups_add_ids')
                             ->label('Add to groups')
                             ->multiple()
-                            ->options(fn () => Group::query()->active()->forCurrentTenant()->pluck('name', 'id')->toArray())
+                            ->options(fn () => Group::query()->forCurrentTenant()->pluck('name', 'id')->toArray())
                             ->searchable(),
                         Select::make('groups_remove_ids')
                             ->label('Remove from groups')
                             ->multiple()
-                            ->options(fn () => Group::query()->active()->forCurrentTenant()->pluck('name', 'id')->toArray())
+                            ->options(fn () => Group::query()->forCurrentTenant()->pluck('name', 'id')->toArray())
                             ->searchable(),
+                    ]),
+                Section::make('Prices')
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        Toggle::make('update_prices')
+                            ->label('Add price')
+                            ->helperText('Create or update price on selected products.'),
+                        Select::make('price_list_id')
+                            ->label(__('eclipse-catalogue::product.price.fields.price_list'))
+                            ->options(function () {
+                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                                $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                                $query = PriceList::query();
+                                if ($tenantFK && $currentTenant) {
+                                    $query->whereHas('priceListData', function ($q) use ($tenantFK, $currentTenant) {
+                                        $q->where($tenantFK, $currentTenant->id)
+                                            ->where('is_active', true);
+                                    });
+                                } else {
+                                    $query->whereHas('priceListData', function ($q) {
+                                        $q->where('is_active', true);
+                                    });
+                                }
+
+                                return $query->orderBy('name')->pluck('name', 'id')->toArray();
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) {
+                                if (! $state) {
+                                    return;
+                                }
+                                $pl = PriceList::query()->select('id', 'tax_included')->find($state);
+                                if ($pl) {
+                                    $set('tax_included', (bool) $pl->tax_included);
+                                }
+                            }),
+                        TextInput::make('price')
+                            ->label(__('eclipse-catalogue::product.price.fields.price'))
+                            ->numeric()
+                            ->rule('decimal:0,5'),
+                        DatePicker::make('valid_from')
+                            ->label(__('eclipse-catalogue::product.price.fields.valid_from'))
+                            ->native(false)
+                            ->default(fn () => now()),
+                        DatePicker::make('valid_to')
+                            ->label(__('eclipse-catalogue::product.price.fields.valid_to'))
+                            ->native(false)
+                            ->nullable(),
+                        Checkbox::make('tax_included')
+                            ->label(__('eclipse-catalogue::product.price.fields.tax_included'))
+                            ->inline(false)
+                            ->default(false),
                     ]),
                 Section::make('Images')
                     ->collapsible()

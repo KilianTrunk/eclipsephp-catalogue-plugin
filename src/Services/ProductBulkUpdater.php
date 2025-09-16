@@ -3,6 +3,7 @@
 namespace Eclipse\Catalogue\Services;
 
 use Eclipse\Catalogue\Models\Group;
+use Eclipse\Catalogue\Models\Product\Price as ProductPrice;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -35,6 +36,14 @@ class ProductBulkUpdater
         $bulkTypeId = array_key_exists('product_type_id', $data) ? $data['product_type_id'] : null;
         $shouldUpdateFreeDelivery = (bool) ($data['update_free_delivery'] ?? false);
         $bulkFreeDelivery = (bool) ($data['free_delivery_value'] ?? false);
+        $shouldUpdateStatus = (bool) ($data['update_product_status'] ?? false);
+        $bulkStatusId = array_key_exists('product_status_id', $data) ? $data['product_status_id'] : null;
+        $shouldUpdatePrices = (bool) ($data['update_prices'] ?? false);
+        $bulkPriceListId = array_key_exists('price_list_id', $data) ? $data['price_list_id'] : null;
+        $bulkPrice = array_key_exists('price', $data) ? $data['price'] : null;
+        $bulkValidFrom = array_key_exists('valid_from', $data) ? $data['valid_from'] : null;
+        $bulkValidTo = array_key_exists('valid_to', $data) ? $data['valid_to'] : null;
+        $bulkTaxIncluded = (bool) ($data['tax_included'] ?? false);
 
         foreach ($products as $product) {
             try {
@@ -44,20 +53,22 @@ class ProductBulkUpdater
                     $shouldUpdateCategories, $bulkCategoryId,
                     $shouldUpdateType, $bulkTypeId,
                     $shouldUpdateFreeDelivery, $bulkFreeDelivery,
+                    $shouldUpdateStatus, $bulkStatusId,
+                    $shouldUpdatePrices, $bulkPriceListId, $bulkPrice, $bulkValidFrom, $bulkValidTo, $bulkTaxIncluded,
                     $product
                 ) {
                     $didChange = false;
 
                     if ($shouldUpdateGroups) {
                         if (! empty($groupAddIds)) {
-                            $validAddIds = Group::query()->active()->forCurrentTenant()->whereIn('id', $groupAddIds)->pluck('id')->all();
+                            $validAddIds = Group::query()->forCurrentTenant()->whereIn('id', $groupAddIds)->pluck('id')->all();
                             if (! empty($validAddIds)) {
                                 $product->groups()->syncWithoutDetaching($validAddIds);
                                 $didChange = true;
                             }
                         }
                         if (! empty($groupRemoveIds)) {
-                            $validRemoveIds = Group::query()->active()->forCurrentTenant()->whereIn('id', $groupRemoveIds)->pluck('id')->all();
+                            $validRemoveIds = Group::query()->forCurrentTenant()->whereIn('id', $groupRemoveIds)->pluck('id')->all();
                             if (! empty($validRemoveIds)) {
                                 $product->groups()->detach($validRemoveIds);
                                 $didChange = true;
@@ -154,6 +165,44 @@ class ProductBulkUpdater
                                     [$tenantFK => $currentTenant->id],
                                     ['has_free_delivery' => (bool) $bulkFreeDelivery]
                                 );
+                                $didChange = true;
+                            }
+                        }
+                    }
+
+                    if ($shouldUpdateStatus) {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        if ($tenantFK && $currentTenant) {
+                            $existing = $product->productData()->where($tenantFK, $currentTenant->id)->first();
+                            $currentStatusId = $existing?->product_status_id;
+                            $newStatusId = $bulkStatusId !== null ? (int) $bulkStatusId : null;
+                            if ($currentStatusId !== $newStatusId) {
+                                $product->productData()->updateOrCreate(
+                                    [$tenantFK => $currentTenant->id],
+                                    ['product_status_id' => $bulkStatusId]
+                                );
+                                $didChange = true;
+                            }
+                        }
+                    }
+
+                    if ($shouldUpdatePrices) {
+                        if ($bulkPriceListId && $bulkPrice !== null && $bulkValidFrom) {
+                            $price = ProductPrice::query()->firstOrNew([
+                                'product_id' => $product->id,
+                                'price_list_id' => (int) $bulkPriceListId,
+                                'valid_from' => \Carbon\Carbon::parse($bulkValidFrom)->toDateString(),
+                            ]);
+
+                            $original = $price->exists ? clone $price : null;
+
+                            $price->price = $bulkPrice;
+                            $price->valid_to = $bulkValidTo ? \Carbon\Carbon::parse($bulkValidTo)->toDateString() : null;
+                            $price->tax_included = (bool) $bulkTaxIncluded;
+                            $price->save();
+
+                            if (! $original || $original->price != $price->price || $original->valid_to != $price->valid_to || $original->tax_included != $price->tax_included) {
                                 $didChange = true;
                             }
                         }
