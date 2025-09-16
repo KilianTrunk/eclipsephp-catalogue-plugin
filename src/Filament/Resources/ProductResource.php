@@ -920,16 +920,6 @@ class ProductResource extends Resource implements HasShieldPermissions
             ->with(['customPropertyValues.property']);
     }
 
-
-    
-    
-
-    public static function getGlobalSearchEloquentQuery(): Builder
-    {
-        return parent::getGlobalSearchEloquentQuery()
-            ->with(['customPropertyValues.property']);
-    }
-
     protected static function getPlaceholderImageUrl(): string
     {
         $svg = view('eclipse-catalogue::components.placeholder-image')->render();

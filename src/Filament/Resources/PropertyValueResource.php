@@ -137,43 +137,43 @@ class PropertyValueResource extends Resource
                     Tables\Actions\EditAction::make()
                         ->modalWidth('lg')
                         ->modalHeading(__('eclipse-catalogue::property-value.modal.edit_heading'))
-                    ->form(function (Form $form) {
-                        $schema = [
-                            Forms\Components\TextInput::make('value')
-                                ->label(__('eclipse-catalogue::property-value.fields.value'))
-                                ->required()
-                                ->maxLength(255),
+                        ->form(function (Form $form) {
+                            $schema = [
+                                Forms\Components\TextInput::make('value')
+                                    ->label(__('eclipse-catalogue::property-value.fields.value'))
+                                    ->required()
+                                    ->maxLength(255),
 
-                            Forms\Components\TextInput::make('info_url')
-                                ->label(__('eclipse-catalogue::property-value.fields.info_url'))
-                                ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
-                                ->url()
-                                ->maxLength(255),
+                                Forms\Components\TextInput::make('info_url')
+                                    ->label(__('eclipse-catalogue::property-value.fields.info_url'))
+                                    ->helperText(__('eclipse-catalogue::property-value.help_text.info_url'))
+                                    ->url()
+                                    ->maxLength(255),
 
-                            Forms\Components\FileUpload::make('image')
-                                ->label(__('eclipse-catalogue::property-value.fields.image'))
-                                ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
-                                ->image()
-                                ->nullable()
-                                ->disk('public')
-                                ->directory('property-values'),
-                        ];
+                                Forms\Components\FileUpload::make('image')
+                                    ->label(__('eclipse-catalogue::property-value.fields.image'))
+                                    ->helperText(__('eclipse-catalogue::property-value.help_text.image'))
+                                    ->image()
+                                    ->nullable()
+                                    ->disk('public')
+                                    ->directory('property-values'),
+                            ];
 
-                        $prop = null;
-                        if (request()->has('property')) {
-                            $prop = \Eclipse\Catalogue\Models\Property::find((int) request('property'));
-                        } elseif ($record = $form->getModelInstance()) {
-                            if (method_exists($record, 'property')) {
-                                $prop = $record->property;
+                            $prop = null;
+                            if (request()->has('property')) {
+                                $prop = \Eclipse\Catalogue\Models\Property::find((int) request('property'));
+                            } elseif ($record = $form->getModelInstance()) {
+                                if (method_exists($record, 'property')) {
+                                    $prop = $record->property;
+                                }
                             }
-                        }
 
-                        if ($prop && $prop->type === PropertyType::COLOR->value) {
-                            $schema = array_merge($schema, static::buildColorGroupSchema());
-                        }
+                            if ($prop && $prop->type === PropertyType::COLOR->value) {
+                                $schema = array_merge($schema, static::buildColorGroupSchema());
+                            }
 
-                        return $form->schema($schema)->columns(1);
-                    }),
+                            return $form->schema($schema)->columns(1);
+                        }),
                     Tables\Actions\Action::make('merge')
                         ->label(__('eclipse-catalogue::property-value.table.actions.merge'))
                         ->icon('heroicon-o-arrow-uturn-right')
