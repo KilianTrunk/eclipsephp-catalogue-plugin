@@ -293,21 +293,13 @@ class ProductResource extends Resource implements HasShieldPermissions
                                         $schema = [];
 
                                         foreach ($properties as $property) {
-                                            if ($property->isListType()) {
+                                            if ($property->isListType() || $property->isColorType()) {
                                                 $valueOptions = $property->values->pluck('value', 'id')->toArray();
 
                                                 if (empty($valueOptions)) {
                                                     continue;
                                                 }
-                                                if (empty($valueOptions)) {
-                                                    continue;
-                                                }
 
-                                                $fieldType = $property->getFormFieldType();
-                                                $fieldName = "property_values_{$property->id}";
-                                                $displayName = $property->internal_name ?: (is_array($property->name)
-                                                    ? ($property->name[app()->getLocale()] ?? reset($property->name))
-                                                    : $property->name);
                                                 $fieldType = $property->getFormFieldType();
                                                 $fieldName = "property_values_{$property->id}";
                                                 $displayName = $property->internal_name ?: (is_array($property->name)
