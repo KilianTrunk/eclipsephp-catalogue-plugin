@@ -65,7 +65,7 @@ it('saves and retrieves none background type', function () {
 
     $retrieved = PropertyValue::find($value->id);
     expect($retrieved->color)->toBeInstanceOf(Background::class);
-    expect($retrieved->color->type)->toBe(Background::TYPE_NONE);
+    expect($retrieved->color->type)->toBe(BackgroundType::NONE->value);
     expect($retrieved->color->isSolid())->toBeFalse();
     expect($retrieved->color->isGradient())->toBeFalse();
     expect($retrieved->color->isMulticolor())->toBeFalse();
@@ -83,7 +83,7 @@ it('saves and retrieves solid color background', function () {
     // Verify database persistence and retrieval
     $retrieved = PropertyValue::find($value->id);
     expect($retrieved->color)->toBeInstanceOf(Background::class);
-    expect($retrieved->color->type)->toBe(Background::TYPE_SOLID);
+    expect($retrieved->color->type)->toBe(BackgroundType::SOLID->value);
     expect($retrieved->color->color)->toBe('#ff0000');
     expect($retrieved->color->isSolid())->toBeTrue();
 
@@ -93,7 +93,7 @@ it('saves and retrieves solid color background', function () {
 
 it('saves and retrieves gradient background', function () {
     $property = Property::factory()->create(['type' => PropertyType::COLOR->value]);
-    $gradientBg = Background::gradient('#ff0000', '#0000ff', 'bottom', Background::GRADIENT_STYLE_SHARP);
+    $gradientBg = Background::gradient('#ff0000', '#0000ff', 'bottom', GradientStyle::SHARP->value);
 
     $value = PropertyValue::factory()->create([
         'property_id' => $property->id,
@@ -102,18 +102,18 @@ it('saves and retrieves gradient background', function () {
 
     $retrieved = PropertyValue::find($value->id);
     expect($retrieved->color)->toBeInstanceOf(Background::class);
-    expect($retrieved->color->type)->toBe(Background::TYPE_GRADIENT);
+    expect($retrieved->color->type)->toBe(BackgroundType::GRADIENT->value);
     expect($retrieved->color->color_start)->toBe('#ff0000');
     expect($retrieved->color->color_end)->toBe('#0000ff');
     expect($retrieved->color->gradient_direction)->toBe('bottom');
-    expect($retrieved->color->gradient_style)->toBe(Background::GRADIENT_STYLE_SHARP);
+    expect($retrieved->color->gradient_style)->toBe(GradientStyle::SHARP->value);
     expect($retrieved->color->isGradient())->toBeTrue();
     expect($retrieved->getColor())->toContain('background-image: linear-gradient(to bottom, #ff0000, #ff0000 50%, #0000ff 50%, #0000ff)');
 });
 
 it('saves and retrieves soft gradient background', function () {
     $property = Property::factory()->create(['type' => PropertyType::COLOR->value]);
-    $gradientBg = Background::gradient('#ff0000', '#0000ff', 'right', Background::GRADIENT_STYLE_SOFT);
+    $gradientBg = Background::gradient('#ff0000', '#0000ff', 'right', GradientStyle::SOFT->value);
 
     $value = PropertyValue::factory()->create([
         'property_id' => $property->id,
@@ -121,7 +121,7 @@ it('saves and retrieves soft gradient background', function () {
     ]);
 
     $retrieved = PropertyValue::find($value->id);
-    expect($retrieved->color->gradient_style)->toBe(Background::GRADIENT_STYLE_SOFT);
+    expect($retrieved->color->gradient_style)->toBe(GradientStyle::SOFT->value);
     expect($retrieved->getColor())->toContain('background-image: linear-gradient(to right, #ff0000 0%, #0000ff 100%)');
 });
 
@@ -136,7 +136,7 @@ it('saves and retrieves multicolor background', function () {
 
     $retrieved = PropertyValue::find($value->id);
     expect($retrieved->color)->toBeInstanceOf(Background::class);
-    expect($retrieved->color->type)->toBe(Background::TYPE_MULTICOLOR);
+    expect($retrieved->color->type)->toBe(BackgroundType::MULTICOLOR->value);
     expect($retrieved->color->isMulticolor())->toBeTrue();
     expect($retrieved->getColor())->toBe('');
 });
@@ -146,7 +146,7 @@ it('serializes background to JSON correctly', function () {
     $serialized = json_encode($bg->toArray());
 
     expect(json_decode($serialized, true))->toBe([
-        'type' => Background::TYPE_SOLID,
+        'type' => BackgroundType::SOLID->value,
         'color' => '#ff0000',
         'color_start' => null,
         'color_end' => null,
@@ -164,7 +164,7 @@ it('renders solid color CSS correctly', function () {
 });
 
 it('renders sharp gradient CSS correctly', function () {
-    $bg = Background::gradient('#ff0000', '#0000ff', 'bottom', Background::GRADIENT_STYLE_SHARP);
+    $bg = Background::gradient('#ff0000', '#0000ff', 'bottom', GradientStyle::SHARP->value);
     $css = (string) $bg;
 
     // Verify sharp gradient format with 50% color stops
@@ -176,7 +176,7 @@ it('renders sharp gradient CSS correctly', function () {
 });
 
 it('renders soft gradient CSS correctly', function () {
-    $bg = Background::gradient('#ff0000', '#0000ff', 'right', Background::GRADIENT_STYLE_SOFT);
+    $bg = Background::gradient('#ff0000', '#0000ff', 'right', GradientStyle::SOFT->value);
     $css = (string) $bg;
 
     expect($css)->toContain('background-image: linear-gradient(to right, #ff0000 0%, #0000ff 100%)');
@@ -189,7 +189,7 @@ it('renders gradient with different directions correctly', function () {
     $directions = ['top', 'bottom', 'left', 'right'];
 
     foreach ($directions as $direction) {
-        $bg = Background::gradient('#ff0000', '#0000ff', $direction, Background::GRADIENT_STYLE_SHARP);
+        $bg = Background::gradient('#ff0000', '#0000ff', $direction, GradientStyle::SHARP->value);
         $css = (string) $bg;
 
         expect($css)->toContain("to {$direction}");
@@ -216,7 +216,7 @@ it('renders empty CSS for solid color without color value', function () {
 
 it('renders gradient with default values when parameters are missing', function () {
     $bg = new Background;
-    $bg->type = Background::TYPE_GRADIENT;
+    $bg->type = BackgroundType::GRADIENT->value;
     $bg->color_start = '#ff0000';
     $bg->color_end = '#0000ff';
 
@@ -298,7 +298,7 @@ it('handles existing property values with null color column', function () {
 
 it('fromArray handles null data correctly', function () {
     $bg = Background::fromArray(null);
-    expect($bg->type)->toBe(Background::TYPE_NONE);
+    expect($bg->type)->toBe(BackgroundType::NONE->value);
     expect($bg->color)->toBeNull();
     expect($bg->color_start)->toBeNull();
     expect($bg->color_end)->toBeNull();
@@ -308,7 +308,7 @@ it('fromArray handles null data correctly', function () {
 
 it('fromArray handles empty array correctly', function () {
     $bg = Background::fromArray([]);
-    expect($bg->type)->toBe(Background::TYPE_NONE);
+    expect($bg->type)->toBe(BackgroundType::NONE->value);
     expect($bg->color)->toBeNull();
     expect($bg->color_start)->toBeNull();
     expect($bg->color_end)->toBeNull();
@@ -318,12 +318,12 @@ it('fromArray handles empty array correctly', function () {
 
 it('fromArray handles partial data correctly', function () {
     $data = [
-        'type' => Background::TYPE_SOLID,
+        'type' => BackgroundType::SOLID->value,
         'color' => '#ff0000',
     ];
 
     $bg = Background::fromArray($data);
-    expect($bg->type)->toBe(Background::TYPE_SOLID);
+    expect($bg->type)->toBe(BackgroundType::SOLID->value);
     expect($bg->color)->toBe('#ff0000');
     expect($bg->color_start)->toBeNull();
     expect($bg->color_end)->toBeNull();
@@ -342,7 +342,7 @@ it('property value attributesToArray handles color serialization', function () {
 
     $attributes = $value->attributesToArray();
     expect($attributes['color'])->toBeArray();
-    expect($attributes['color']['type'])->toBe(Background::TYPE_SOLID);
+    expect($attributes['color']['type'])->toBe(BackgroundType::SOLID->value);
     expect($attributes['color']['color'])->toBe('#ff0000');
 });
 
@@ -356,6 +356,6 @@ it('property value attributesToArray handles null color correctly', function () 
 
     $attributes = $value->attributesToArray();
     expect($attributes['color'])->toBeArray();
-    expect($attributes['color']['type'])->toBe(Background::TYPE_NONE);
+    expect($attributes['color']['type'])->toBe(BackgroundType::NONE->value);
     expect($attributes['color']['color'])->toBeNull();
 });
