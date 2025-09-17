@@ -5,7 +5,6 @@ namespace Eclipse\Catalogue\Filament\Resources;
 use Eclipse\Catalogue\Enums\BackgroundType;
 use Eclipse\Catalogue\Enums\GradientDirection;
 use Eclipse\Catalogue\Enums\GradientStyle;
-use Eclipse\Catalogue\Enums\PropertyType;
 use Eclipse\Catalogue\Filament\Resources\PropertyValueResource\Pages;
 use Eclipse\Catalogue\Models\PropertyValue;
 use Eclipse\Catalogue\Values\Background;
@@ -33,6 +32,9 @@ class PropertyValueResource extends Resource
     public static function form(Form $form): Form
     {
         $schema = [
+            Forms\Components\Hidden::make('property_id')
+                ->default(fn () => request()->has('property') ? (int) request('property') : null),
+
             Forms\Components\TextInput::make('value')
                 ->label(__('eclipse-catalogue::property-value.fields.value'))
                 ->required()
@@ -78,8 +80,9 @@ class PropertyValueResource extends Resource
 
         if (request()->has('property')) {
             $prop = \Eclipse\Catalogue\Models\Property::find((int) request('property'));
-            if ($prop && $prop->type === PropertyType::COLOR->value) {
-                $schema = array_merge($schema, static::buildColorGroupSchema());
+            if ($prop && $prop->isColorType()) {
+                $colorGroup = static::buildColorGroupSchema();
+                array_splice($schema, 1, 0, $colorGroup);
             }
         }
 
@@ -168,8 +171,9 @@ class PropertyValueResource extends Resource
                                 }
                             }
 
-                            if ($prop && $prop->type === PropertyType::COLOR->value) {
-                                $schema = array_merge($schema, static::buildColorGroupSchema());
+                            if ($prop && $prop->isColorType()) {
+                                $colorGroup = static::buildColorGroupSchema();
+                                array_splice($schema, 1, 0, $colorGroup);
                             }
 
                             return $form->schema($schema)->columns(1);
@@ -254,7 +258,7 @@ class PropertyValueResource extends Resource
                 ->schema([
                     Forms\Components\Radio::make('type')
                         ->options(fn () => collect(BackgroundType::cases())
-                            ->mapWithKeys(fn (BackgroundType $e) => [$e->value => $e->label()])
+                            ->mapWithKeys(fn (BackgroundType $e) => [$e->value => $e->getLabel()])
                             ->toArray())
                         ->default(BackgroundType::NONE->value)
                         ->live(),
@@ -269,12 +273,12 @@ class PropertyValueResource extends Resource
                             Forms\Components\ColorPicker::make('color_end')->columnSpan(2)->live(),
                             Forms\Components\Select::make('gradient_direction')
                                 ->options(fn () => collect(GradientDirection::cases())
-                                    ->mapWithKeys(fn (GradientDirection $e) => [$e->value => $e->label()])
+                                    ->mapWithKeys(fn (GradientDirection $e) => [$e->value => $e->getLabel()])
                                     ->toArray())
                                 ->default(GradientDirection::BOTTOM->value)->columnSpan(2)->live(),
                             Forms\Components\Radio::make('gradient_style')
                                 ->options(fn () => collect(GradientStyle::cases())
-                                    ->mapWithKeys(fn (GradientStyle $e) => [$e->value => $e->label()])
+                                    ->mapWithKeys(fn (GradientStyle $e) => [$e->value => $e->getLabel()])
                                     ->toArray())
                                 ->inline()
                                 ->inlineLabel(false)

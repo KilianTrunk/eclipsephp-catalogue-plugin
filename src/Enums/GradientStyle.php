@@ -2,7 +2,9 @@
 
 namespace Eclipse\Catalogue\Enums;
 
-enum GradientStyle: string
+use Filament\Support\Contracts\HasLabel;
+
+enum GradientStyle: string implements HasLabel
 {
     case SHARP = 's';
     case SOFT = 'f';
@@ -10,7 +12,7 @@ enum GradientStyle: string
     /**
      * Get the label for the gradient style.
      */
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match ($this) {
             self::SHARP => 'Sharp',
