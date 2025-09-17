@@ -30,14 +30,22 @@ class ProductBulkUpdater
         $image1 = $data['image_1'] ?? null;
         $image2 = $data['image_2'] ?? null;
         $image3 = $data['image_3'] ?? null;
-        $shouldUpdateCategories = (bool) ($data['update_categories'] ?? false);
-        $bulkCategoryId = array_key_exists('category_id', $data) ? $data['category_id'] : null;
-        $shouldUpdateType = (bool) ($data['update_product_type'] ?? false);
-        $bulkTypeId = array_key_exists('product_type_id', $data) ? $data['product_type_id'] : null;
-        $shouldUpdateFreeDelivery = (bool) ($data['update_free_delivery'] ?? false);
-        $bulkFreeDelivery = (bool) ($data['free_delivery_value'] ?? false);
-        $shouldUpdateStatus = (bool) ($data['update_product_status'] ?? false);
-        $bulkStatusId = array_key_exists('product_status_id', $data) ? $data['product_status_id'] : null;
+        $shouldUpdateCategories = array_key_exists('category_id', $data) && $data['category_id'] !== '__no_change__';
+        $bulkCategoryId = array_key_exists('category_id', $data)
+            ? ($data['category_id'] === '__no_change__' ? null : $data['category_id'])
+            : null;
+        $shouldUpdateType = array_key_exists('product_type_id', $data) && $data['product_type_id'] !== '__no_change__';
+        $bulkTypeId = array_key_exists('product_type_id', $data)
+            ? ($data['product_type_id'] === '__no_change__' ? null : $data['product_type_id'])
+            : null;
+        $shouldUpdateFreeDelivery = array_key_exists('free_delivery', $data) && $data['free_delivery'] !== '__no_change__';
+        $bulkFreeDelivery = array_key_exists('free_delivery', $data)
+            ? (bool) ((string) $data['free_delivery'] === '1')
+            : false;
+        $shouldUpdateStatus = array_key_exists('product_status_id', $data) && $data['product_status_id'] !== '__no_change__';
+        $bulkStatusId = array_key_exists('product_status_id', $data)
+            ? ($data['product_status_id'] === '__no_change__' ? null : $data['product_status_id'])
+            : null;
         $shouldUpdatePrices = (bool) ($data['update_prices'] ?? false);
         $bulkPriceListId = array_key_exists('price_list_id', $data) ? $data['price_list_id'] : null;
         $bulkPrice = array_key_exists('price', $data) ? $data['price'] : null;

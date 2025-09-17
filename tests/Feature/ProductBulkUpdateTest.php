@@ -50,10 +50,8 @@ it('respects no-change vs blank update for category and toggle fields', function
 
     // 2) Update(blank): clear the category, set free delivery true
     $result = $updater->apply([
-        'update_categories' => true,
         'category_id' => null,
-        'update_free_delivery' => true,
-        'free_delivery_value' => true,
+        'free_delivery' => '1',
     ], [$product]);
 
     expect($result['successCount'])->toBe(1);
@@ -151,7 +149,6 @@ it('rolls back only the failing product inside per-product transaction', functio
     $updater = app(ProductBulkUpdater::class);
 
     $result = $updater->apply([
-        'update_product_type' => true,
         'product_type_id' => null, // change from non-null to null
     ], [$p1, $p2]);
 

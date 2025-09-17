@@ -34,98 +34,87 @@ class BulkUpdateProductsAction extends BulkAction
             ->icon('heroicon-o-wrench')
             ->deselectRecordsAfterCompletion()
             ->form([
-                Section::make('Product Status')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Toggle::make('update_product_status')
-                            ->label('Update product status')
-                            ->helperText('Select a product status to assign to selected products for the current tenant.'),
-                        Select::make('product_status_id')
-                            ->label(__('eclipse-catalogue::product-status.singular'))
-                            ->options(function () {
-                                $query = ProductStatus::query();
-                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
-                                $currentTenant = \Filament\Facades\Filament::getTenant();
+                Select::make('product_status_id')
+                    ->label(__('eclipse-catalogue::product-status.singular'))
+                    ->options(function () {
+                        $query = ProductStatus::query();
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
 
-                                if ($tenantFK && $currentTenant) {
-                                    $query->where($tenantFK, $currentTenant->id);
-                                }
+                        if ($tenantFK && $currentTenant) {
+                            $query->where($tenantFK, $currentTenant->id);
+                        }
 
-                                return $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
-                                    $title = is_array($status->title)
-                                        ? ($status->title[app()->getLocale()] ?? reset($status->title))
-                                        : $status->title;
+                        $noChange = __('eclipse-catalogue::common.no_change') ?: '-- no change --';
+                        $options = $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                            $title = is_array($status->title)
+                                ? ($status->title[app()->getLocale()] ?? reset($status->title))
+                                : $status->title;
 
-                                    return [$status->id => $title];
-                                })->toArray();
-                            })
-                            ->searchable()
-                            ->nullable(),
-                    ]),
-                Section::make('Product Type')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Toggle::make('update_product_type')
-                            ->label('Update product type')
-                            ->helperText('Select a product type to assign to selected products.'),
-                        Select::make('product_type_id')
-                            ->label('Product Type')
-                            ->options(function () {
-                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
-                                $currentTenant = \Filament\Facades\Filament::getTenant();
+                            return [$status->id => $title];
+                        })->toArray();
 
-                                $query = ProductType::query();
+                        return ['__no_change__' => $noChange] + $options;
+                    })
+                    ->searchable()
+                    ->default('__no_change__'),
+                Select::make('product_type_id')
+                    ->label('Product Type')
+                    ->options(function () {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
 
-                                if ($tenantFK && $currentTenant) {
-                                    $query->whereHas('productTypeData', function ($q) use ($tenantFK, $currentTenant) {
-                                        $q->where($tenantFK, $currentTenant->id)
-                                            ->where('is_active', true);
-                                    });
-                                } else {
-                                    $query->whereHas('productTypeData', function ($q) {
-                                        $q->where('is_active', true);
-                                    });
-                                }
+                        $query = ProductType::query();
 
-                                return $query->pluck('name', 'id')->toArray();
-                            })
-                            ->searchable()
-                            ->nullable(),
-                    ]),
-                Section::make('Free delivery')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Toggle::make('update_free_delivery')
-                            ->label('Update free delivery')
-                            ->helperText('Set the free delivery flag for the current tenant.'),
-                        Toggle::make('free_delivery_value')
-                            ->label('Has free delivery'),
-                    ]),
-                Section::make('Categories')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Toggle::make('update_categories')
-                            ->label('Update categories')
-                            ->helperText('Choose a category to assign to selected products for the current tenant.'),
-                        Select::make('category_id')
-                            ->label('Category')
-                            ->options(function () {
-                                $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
-                                $currentTenant = \Filament\Facades\Filament::getTenant();
-                                $query = Category::query()->withoutGlobalScopes();
-                                if ($tenantFK && $currentTenant) {
-                                    $query->where($tenantFK, $currentTenant->id);
-                                }
+                        if ($tenantFK && $currentTenant) {
+                            $query->whereHas('productTypeData', function ($q) use ($tenantFK, $currentTenant) {
+                                $q->where($tenantFK, $currentTenant->id)
+                                    ->where('is_active', true);
+                            });
+                        } else {
+                            $query->whereHas('productTypeData', function ($q) {
+                                $q->where('is_active', true);
+                            });
+                        }
 
-                                return $query->orderBy('name')->pluck('name', 'id')->toArray();
-                            })
-                            ->searchable()
-                            ->nullable(),
-                    ]),
+                        $noChange = __('eclipse-catalogue::common.no_change') ?: '-- no change --';
+                        $options = $query->pluck('name', 'id')->toArray();
+
+                        return ['__no_change__' => $noChange] + $options;
+                    })
+                    ->searchable()
+                    ->default('__no_change__'),
+                Select::make('free_delivery')
+                    ->label(__('eclipse-catalogue::product.fields.has_free_delivery'))
+                    ->options(function () {
+                        $noChange = __('eclipse-catalogue::common.no_change') ?: '-- no change --';
+                        $yes = __('eclipse-catalogue::common.yes') ?: 'Yes';
+                        $no = __('eclipse-catalogue::common.no') ?: 'No';
+
+                        return [
+                            '__no_change__' => $noChange,
+                            '1' => $yes,
+                            '0' => $no,
+                        ];
+                    })
+                    ->default('__no_change__'),
+                Select::make('category_id')
+                    ->label('Category')
+                    ->options(function () {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        $query = Category::query()->withoutGlobalScopes();
+                        if ($tenantFK && $currentTenant) {
+                            $query->where($tenantFK, $currentTenant->id);
+                        }
+
+                        $noChange = __('eclipse-catalogue::common.no_change') ?: '-- no change --';
+                        $options = $query->orderBy('name')->pluck('name', 'id')->toArray();
+
+                        return ['__no_change__' => $noChange] + $options;
+                    })
+                    ->searchable()
+                    ->default('__no_change__'),
                 Section::make('Groups')
                     ->collapsible()
                     ->collapsed()
