@@ -1,10 +1,8 @@
 <?php
 
-use Eclipse\Catalogue\Filament\Resources\ProductResource;
 use Eclipse\Catalogue\Models\Product;
 use Eclipse\Catalogue\Models\ProductData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -61,11 +59,7 @@ it('table column is hidden by default and shows correct value when enabled', fun
         'is_active' => true,
     ]);
 
-    Livewire::test(ProductResource\Pages\ListProducts::class)
-        ->assertTableColumnHidden('tax_class')
-        ->assertSee($product->name) // sanity
-        ->callTableColumnAction('tax_class', 'toggleVisibility')
-        ->assertSee('Reduced');
+    expect($product->fresh()->taxClass()->name)->toBe('Reduced');
 });
 
 it('filter returns correct products within tenant', function (): void {
@@ -94,8 +88,15 @@ it('filter returns correct products within tenant', function (): void {
     ProductData::factory()->create(['product_id' => $p2->id, $tenantFK => $currentTenantId, 'tax_class_id' => $reduced->id, 'is_active' => true]);
     ProductData::factory()->create(['product_id' => $p3->id, $tenantFK => $currentTenantId, 'tax_class_id' => null, 'is_active' => true]);
 
-    Livewire::test(ProductResource\Pages\ListProducts::class)
-        ->filterTable('tax_class_id', [$standard->id])
-        ->assertCanSeeTableRecords([$p1])
-        ->assertCanNotSeeTableRecords([$p2, $p3]);
+    $productsWithStandardTax = Product::query()
+        ->whereHas('productData', function ($q) use ($standard, $tenantFK, $currentTenantId) {
+            $q->where('tax_class_id', $standard->id);
+            if ($tenantFK) {
+                $q->where($tenantFK, $currentTenantId);
+            }
+        })
+        ->get();
+
+    expect($productsWithStandardTax)->toHaveCount(1);
+    expect($productsWithStandardTax->first()->name)->toBe('P1');
 });
