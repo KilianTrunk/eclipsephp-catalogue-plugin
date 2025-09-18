@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::table('pim_property_value', function (Blueprint $table) {
             $table->boolean('is_group')->default(false)->after('image');
-            $table->unsignedBigInteger('group_value_id')->nullable()->after('is_group');
 
-            $table->index('group_value_id', 'pim_property_value_group_value_id_index');
-            $table->foreign('group_value_id', 'pim_property_value_group_value_id_foreign')
-                ->references('id')->on('pim_property_value')
+            $table->foreignId('group_value_id')
+                ->nullable()
+                ->after('is_group')
+                ->constrained('pim_property_value')
                 ->nullOnDelete();
         });
     }
@@ -22,9 +22,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('pim_property_value', function (Blueprint $table) {
-            $table->dropForeign('pim_property_value_group_value_id_foreign');
-            $table->dropIndex('pim_property_value_group_value_id_index');
-            $table->dropColumn(['is_group', 'group_value_id']);
+            $table->dropConstrainedForeignId('group_value_id');
+            $table->dropColumn('is_group');
         });
     }
 };
