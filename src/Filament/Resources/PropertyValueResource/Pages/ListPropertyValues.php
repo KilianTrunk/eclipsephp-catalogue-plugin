@@ -41,8 +41,8 @@ class ListPropertyValues extends ListRecords
             Actions\CreateAction::make()
                 ->modalWidth('lg')
                 ->modalHeading(__('eclipse-catalogue::property-value.modal.create_heading'))
-                ->form(fn (\Filament\Forms\Form $form) => $form
-                    ->schema([
+                ->form(function (\Filament\Forms\Form $form) {
+                    $schema = [
                         \Filament\Forms\Components\TextInput::make('value')
                             ->label(__('eclipse-catalogue::property-value.fields.value'))
                             ->required()
@@ -61,13 +61,19 @@ class ListPropertyValues extends ListRecords
                             ->nullable()
                             ->disk('public')
                             ->directory('property-values'),
-                    ])
-                    ->columns(1)
-                )
+                    ];
+
+                    if ($this->property && $this->property->isColorType()) {
+                        $colorGroup = PropertyValueResource::buildColorGroupSchema();
+                        array_splice($schema, 1, 0, $colorGroup);
+                    }
+
+                    return $form->schema($schema)->columns(1);
+                })
                 ->mutateFormDataUsing(function (array $data): array {
-                    // Set the property_id from the request if available
-                    if (request()->has('property')) {
-                        $data['property_id'] = (int) request('property');
+                    // Ensure property_id is set from the page state
+                    if (empty($data['property_id']) && $this->property) {
+                        $data['property_id'] = $this->property->id;
                     }
 
                     return $data;

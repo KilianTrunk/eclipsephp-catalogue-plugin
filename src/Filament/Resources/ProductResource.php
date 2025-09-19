@@ -312,7 +312,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                         $schema = [];
 
                                         foreach ($properties as $property) {
-                                            if ($property->isListType()) {
+                                            if ($property->isListType() || $property->isColorType()) {
                                                 $valueOptions = $property->values->pluck('value', 'id')->toArray();
 
                                                 if (empty($valueOptions)) {
