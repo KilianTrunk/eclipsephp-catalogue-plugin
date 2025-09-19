@@ -9,6 +9,7 @@ return [
         'info_url' => 'URL informacij',
         'image' => 'Slika',
         'sort' => 'Vrstni red',
+        'import_file' => 'Uvoz datoteke',
     ],
 
     'sections' => [
@@ -25,6 +26,7 @@ return [
         'info_url' => 'Neobvezna povezava "več informacij"',
         'image' => 'Neobvezna slika za to vrednost (npr. logotip blagovne znamke)',
         'sort' => 'Nižje številke se prikažejo prve',
+        'import_file' => 'Naložite Excel (.xlsx, .xls) ali CSV datoteko z dvema stolpcema: <strong>name</strong> in <strong>hex</strong>. Primer: Rdeča, #FF0000',
     ],
 
     'table' => [
@@ -46,9 +48,14 @@ return [
         ],
     ],
 
+    'actions' => [
+        'import' => 'Uvozi barve',
+    ],
+
     'modal' => [
         'create_heading' => 'Ustvari vrednost lastnosti',
         'edit_heading' => 'Uredi vrednost lastnosti',
+        'import_heading' => 'Uvozi vrednosti barv',
         'merge_heading' => 'Združi vrednost',
         'merge_from_label' => 'Združi vrednost…',
         'merge_to_label' => 'Z vrednostjo…*',
@@ -77,6 +84,21 @@ return [
         'breadcrumbs' => [
             'properties' => 'Lastnosti',
             'list' => 'Seznam',
+        ],
+    ],
+
+    'notifications' => [
+        'import_queued' => [
+            'title' => 'Uvoz v čakalni vrsti',
+            'body' => 'Uvoz barv je bil dodan v čakalno vrsto in bo obdelan v ozadju.',
+        ],
+        'import_completed' => [
+            'title' => 'Uvoz končan',
+            'body' => 'Uvoz končan: :inserted dodano, :skipped preskočeno, :errors napak.',
+            'errors' => 'Napake',
+        ],
+        'import_failed' => [
+            'title' => 'Uvoz ni uspel',
         ],
     ],
 ];
