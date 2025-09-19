@@ -14,6 +14,14 @@ beforeEach(function () {
     Storage::fake('local');
 });
 
+function runImportJob(ImportColorValues $job): void
+{
+    $ref = new ReflectionClass($job);
+    $method = $ref->getMethod('execute');
+    $method->setAccessible(true);
+    $method->invoke($job);
+}
+
 it('uploads valid file and imports all values', function () {
     Queue::fake();
 
@@ -26,8 +34,7 @@ it('uploads valid file and imports all values', function () {
 
     // Dispatch the job
     $job = new ImportColorValues($filePath, $property->id);
-
-    $job->handle();
+    runImportJob($job);
 
     // Assert that all values were imported
     expect(PropertyValue::where('property_id', $property->id)->count())->toBe(3);
@@ -59,7 +66,7 @@ it('handles duplicates gracefully by skipping them', function () {
 
     // Dispatch the job
     $job = new ImportColorValues($filePath, $property->id);
-    $job->handle();
+    runImportJob($job);
 
     // Should still have only 2 values (1 existing + 1 new)
     expect(PropertyValue::where('property_id', $property->id)->count())->toBe(2);
@@ -86,7 +93,7 @@ it('reports errors for invalid hex colors without crashing', function () {
 
     // Dispatch the job
     $job = new ImportColorValues($filePath, $property->id);
-    $job->handle();
+    runImportJob($job);
 
     // Should have only 2 valid values
     expect(PropertyValue::where('property_id', $property->id)->count())->toBe(2);
@@ -113,7 +120,7 @@ it('shows correct counts in notification after import', function () {
 
     // Dispatch the job
     $job = new ImportColorValues($filePath, $property->id);
-    $job->handle();
+    runImportJob($job);
 
     // Check notification body contains correct counts
     $reflection = new ReflectionClass($job);
