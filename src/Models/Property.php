@@ -56,12 +56,20 @@ class Property extends Model
             if ($property->code) {
                 $property->code = strtolower($property->code);
             }
+            // Ensure color type properties are always multilingual
+            if ($property->isColorType()) {
+                $property->is_multilang = true;
+            }
         });
 
         static::updating(function (Property $property) {
             $property->validateTypeAndInputType();
             if ($property->isDirty('code') && $property->code) {
                 $property->code = strtolower($property->code);
+            }
+            // Ensure color type properties remain multilingual on updates
+            if ($property->isColorType()) {
+                $property->is_multilang = true;
             }
         });
 
@@ -158,6 +166,16 @@ class Property extends Model
 
     public function supportsMultilang(): bool
     {
+        // Color type properties are always multilingual
+        if ($this->isColorType()) {
+            return true;
+        }
+
+        // Only custom type properties can be multilingual based on input type
+        if (! $this->isCustomType()) {
+            return false;
+        }
+
         return $this->is_multilang && in_array($this->input_type, [
             PropertyInputType::STRING->value,
             PropertyInputType::TEXT->value,

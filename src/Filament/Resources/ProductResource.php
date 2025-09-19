@@ -12,10 +12,12 @@ use Eclipse\Catalogue\Forms\Components\InlineTranslatableField;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Group;
 use Eclipse\Catalogue\Models\Product;
+use Eclipse\Catalogue\Models\ProductStatus;
 use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Eclipse\World\Models\Country;
+use Eclipse\World\Models\TariffCode;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
@@ -25,6 +27,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\View as ViewComponent;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
@@ -139,6 +142,24 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             ->searchable(['id', 'name'])
                                             ->preload()
                                             ->placeholder(__('eclipse-catalogue::product.placeholders.origin_country_id')),
+
+                                        Select::make('tariff_code_id')
+                                            ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
+                                            ->relationship('tariffCode', 'code', function ($query) {
+                                                return $query->whereRaw('LENGTH(code) = 8');
+                                            })
+                                            ->getOptionLabelFromRecordUsing(function (TariffCode $record) {
+                                                $name = $record->name;
+                                                if (is_array($name)) {
+                                                    $locale = app()->getLocale();
+                                                    $name = $name[$locale] ?? reset($name);
+                                                }
+
+                                                return $record->code.' — '.$name;
+                                            })
+                                            ->searchable(['code', 'name'])
+                                            ->preload()
+                                            ->placeholder(__('eclipse-catalogue::product.placeholders.tariff_code_id')),
                                     ])
                                     ->collapsible()
                                     ->persistCollapsed(),
@@ -178,13 +199,31 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                 ->searchable()
                                                 ->preload()
                                                 ->placeholder(__('eclipse-catalogue::product.placeholders.category_id')),
+
+                                            Select::make("tenant_data.{$tenantId}.product_status_id")
+                                                ->label(__('eclipse-catalogue::product-status.singular'))
+                                                ->options(function () use ($tenantId) {
+                                                    $query = ProductStatus::query();
+                                                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                                                    if ($tenantFK) {
+                                                        $query->where($tenantFK, $tenantId);
+                                                    }
+
+                                                    return $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                                                        $title = is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
+
+                                                        return [$status->id => $title];
+                                                    })->toArray();
+                                                })
+                                                ->searchable()
+                                                ->preload(),
+
                                             Select::make("tenant_data.{$tenantId}.groups")
                                                 ->label('Groups')
                                                 ->multiple()
                                                 ->options(function () use ($tenantId) {
                                                     return Group::query()
                                                         ->where(config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
-                                                        ->where('is_active', true)
                                                         ->orderBy('name')
                                                         ->pluck('name', 'id')
                                                         ->toArray();
@@ -195,6 +234,7 @@ class ProductResource extends Resource implements HasShieldPermissions
                                             TextInput::make("tenant_data.{$tenantId}.sorting_label")
                                                 ->label(__('eclipse-catalogue::product.fields.sorting_label'))
                                                 ->maxLength(255),
+
                                             \Filament\Forms\Components\DateTimePicker::make("tenant_data.{$tenantId}.available_from_date")
                                                 ->label(__('eclipse-catalogue::product.fields.available_from_date')),
                                         ];
@@ -202,6 +242,13 @@ class ProductResource extends Resource implements HasShieldPermissions
                                     sectionTitle: __('eclipse-catalogue::product.sections.tenant_settings'),
                                     sectionDescription: __('eclipse-catalogue::product.sections.tenant_settings_description'),
                                 ),
+                            ]),
+
+                        Tabs\Tab::make(__('eclipse-catalogue::product.price.tab'))
+                            ->badge(fn (?Product $record) => $record?->prices()->count() ?? 0)
+                            ->schema([
+                                ViewComponent::make('eclipse-catalogue::product.prices-table')
+                                    ->columnSpanFull(),
                             ]),
 
                         Tabs\Tab::make('Properties')
@@ -428,7 +475,8 @@ class ProductResource extends Resource implements HasShieldPermissions
                                                             $schema[] = RichEditor::make($fieldName)
                                                                 ->label($displayName)
                                                                 ->helperText($property->description)
-                                                                ->rules(['string', 'max:65535']);
+                                                                ->rules(['string', 'max:65535'])
+                                                                ->columnSpanFull();
                                                         }
                                                         break;
 
@@ -559,6 +607,65 @@ class ProductResource extends Resource implements HasShieldPermissions
                 TextColumn::make('name')
                     ->toggleable(false),
 
+                TextColumn::make('status')
+                    ->label(__('eclipse-catalogue::product-status.singular'))
+                    ->badge()
+                    ->getStateUsing(function (Product $record) {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $status = null;
+
+                        if ($record->relationLoaded('productData')) {
+                            $row = $record->productData
+                                ->when($tenantFK && $currentTenant, fn ($c) => $c->where($tenantFK, $currentTenant->id))
+                                ->first();
+                            if ($row && $row->relationLoaded('status')) {
+                                $status = $row->status;
+                            }
+                        }
+
+                        if (! $status) {
+                            return __('eclipse-catalogue::product-status.fields.no_status') ?? 'No status';
+                        }
+
+                        return is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
+                    })
+                    ->color(function (Product $record) {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $status = null;
+                        if ($record->relationLoaded('productData')) {
+                            $row = $record->productData
+                                ->when($tenantFK && $currentTenant, fn ($c) => $c->where($tenantFK, $currentTenant->id))
+                                ->first();
+                            if ($row && $row->relationLoaded('status')) {
+                                $status = $row->status;
+                            }
+                        }
+
+                        return $status?->label_type ?? 'gray';
+                    })
+                    ->extraAttributes(function (Product $record) {
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+                        $status = null;
+                        if ($record->relationLoaded('productData')) {
+                            $row = $record->productData
+                                ->when($tenantFK && $currentTenant, fn ($c) => $c->where($tenantFK, $currentTenant->id))
+                                ->first();
+                            if ($row && $row->relationLoaded('status')) {
+                                $status = $row->status;
+                            }
+                        }
+
+                        return $status ? ['class' => \Eclipse\Catalogue\Support\LabelType::badgeClass($status->label_type)] : [];
+                    })
+                    ->searchable(false)
+                    ->sortable(false),
+
                 TextColumn::make('category')
                     ->label('Category')
                     ->getStateUsing(function (Product $record) {
@@ -600,6 +707,27 @@ class ProductResource extends Resource implements HasShieldPermissions
                 TextColumn::make('originCountry.name')
                     ->label(__('eclipse-catalogue::product.fields.origin_country_id')),
 
+                TextColumn::make('tariffCode.code')
+                    ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
+                    ->getStateUsing(function (Product $record) {
+                        $tariffCode = $record->tariffCode;
+                        if (! $tariffCode) {
+                            return null;
+                        }
+
+                        $name = $tariffCode->name;
+                        if (is_array($name)) {
+                            $locale = app()->getLocale();
+                            $name = $name[$locale] ?? reset($name);
+                        }
+
+                        return $tariffCode->code.' — '.$name;
+                    })
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
+                    ->searchable()
+                    ->copyable(),
+
                 TextColumn::make('short_description')
                     ->words(5),
 
@@ -625,6 +753,37 @@ class ProductResource extends Resource implements HasShieldPermissions
             ->searchable()
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('product_status_id')
+                    ->label(__('eclipse-catalogue::product-status.singular'))
+                    ->multiple()
+                    ->options(function () {
+                        $query = ProductStatus::query();
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        if ($tenantFK && $currentTenant) {
+                            $query->where($tenantFK, $currentTenant->id);
+                        }
+
+                        return $query->orderBy('priority')->get()->mapWithKeys(function ($status) {
+                            $title = is_array($status->title) ? ($status->title[app()->getLocale()] ?? reset($status->title)) : $status->title;
+
+                            return [$status->id => $title];
+                        })->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        $selected = $data['values'] ?? ($data['value'] ?? null);
+                        if (empty($selected)) {
+                            return;
+                        }
+                        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+                        $currentTenant = \Filament\Facades\Filament::getTenant();
+                        $query->whereHas('productData', function ($q) use ($selected, $tenantFK, $currentTenant) {
+                            if ($tenantFK && $currentTenant) {
+                                $q->where($tenantFK, $currentTenant->id);
+                            }
+                            $q->whereIn('product_status_id', (array) $selected);
+                        });
+                    }),
                 SelectFilter::make('category_id')
                     ->label('Categories')
                     ->multiple()
@@ -669,6 +828,28 @@ class ProductResource extends Resource implements HasShieldPermissions
                     ->label(__('eclipse-catalogue::product.fields.origin_country_id'))
                     ->multiple()
                     ->options(fn () => Country::query()->orderBy('name')->pluck('name', 'id')->toArray()),
+
+                SelectFilter::make('tariff_code_id')
+                    ->label(__('eclipse-catalogue::product.fields.tariff_code_id'))
+                    ->multiple()
+                    ->options(function () {
+                        return TariffCode::query()
+                            ->whereRaw('LENGTH(code) = 8')
+                            ->orderBy('code')
+                            ->get()
+                            ->mapWithKeys(function ($tariffCode) {
+                                $name = $tariffCode->name;
+                                if (is_array($name)) {
+                                    $locale = app()->getLocale();
+                                    $name = $name[$locale] ?? reset($name);
+                                }
+
+                                return [$tariffCode->id => $tariffCode->code.' — '.$name];
+                            })
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('groups')
                     ->label('Groups')
                     ->multiple()
@@ -676,11 +857,10 @@ class ProductResource extends Resource implements HasShieldPermissions
                         $currentTenant = \Filament\Facades\Filament::getTenant();
                         $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
                         if ($currentTenant) {
-                            return $query->where($tenantFK, $currentTenant->id)
-                                ->where('is_active', true);
+                            return $query->where($tenantFK, $currentTenant->id);
                         }
 
-                        return $query->where('is_active', true);
+                        return $query;
                     }),
                 TernaryFilter::make('is_active')
                     ->label(__('eclipse-catalogue::product.table.columns.is_active'))
@@ -801,10 +981,23 @@ class ProductResource extends Resource implements HasShieldPermissions
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        $currentTenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenantFK && $currentTenant) {
+            $query->with(['productData' => function ($q) use ($tenantFK, $currentTenant) {
+                $q->where($tenantFK, $currentTenant->id)->with('status');
+            }]);
+        } else {
+            $query->with(['productData.status']);
+        }
+
+        return $query;
     }
 
     public static function getGloballySearchableAttributes(): array
@@ -817,14 +1010,22 @@ class ProductResource extends Resource implements HasShieldPermissions
             'name',
             'short_description',
             'description',
+            'tariffCode.code',
+            'tariffCode.name',
         ];
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        return array_filter([
+        $details = [
             'Code' => $record->code,
-        ]);
+        ];
+
+        if ($record->tariffCode) {
+            $details['Tariff Code'] = $record->tariffCode->code;
+        }
+
+        return array_filter($details);
     }
 
     public static function getGlobalSearchEloquentQuery(): Builder

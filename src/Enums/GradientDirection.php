@@ -2,7 +2,9 @@
 
 namespace Eclipse\Catalogue\Enums;
 
-enum GradientDirection: string
+use Filament\Support\Contracts\HasLabel;
+
+enum GradientDirection: string implements HasLabel
 {
     case RIGHT = 'right';
     case LEFT = 'left';
@@ -12,7 +14,7 @@ enum GradientDirection: string
     /**
      * Get the label for the gradient direction.
      */
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match ($this) {
             self::RIGHT => 'Right',

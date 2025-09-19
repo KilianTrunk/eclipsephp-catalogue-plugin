@@ -161,7 +161,8 @@ class PropertyResource extends Resource implements HasShieldPermissions
                 Tables\Columns\IconColumn::make('is_multilang')
                     ->label('Multilingual')
                     ->boolean()
-                    ->visible(fn (?Property $record) => $record && $record->isCustomType() && $record->supportsMultilang()),
+                    ->state(fn (?Property $record) => $record?->supportsMultilang())
+                    ->visible(fn (?Property $record) => $record && $record->supportsMultilang()),
 
                 Tables\Columns\IconColumn::make('is_global')
                     ->label(__('eclipse-catalogue::property.table.columns.is_global'))

@@ -2,6 +2,9 @@
 
 namespace Eclipse\Catalogue\Values;
 
+use Eclipse\Catalogue\Enums\BackgroundType;
+use Eclipse\Catalogue\Enums\GradientDirection;
+use Eclipse\Catalogue\Enums\GradientStyle;
 use Stringable;
 
 /**
@@ -10,19 +13,7 @@ use Stringable;
  */
 class Background implements Stringable
 {
-    public const TYPE_NONE = 'n';
-
-    public const TYPE_SOLID = 's';
-
-    public const TYPE_GRADIENT = 'g';
-
-    public const TYPE_MULTICOLOR = 'm';
-
-    public const GRADIENT_STYLE_SHARP = 's';
-
-    public const GRADIENT_STYLE_SOFT = 'f';
-
-    public string $type = self::TYPE_NONE;
+    public string $type = BackgroundType::NONE->value;
 
     public ?string $color = null;
 
@@ -50,7 +41,7 @@ class Background implements Stringable
     public static function solid(string $hex): self
     {
         $bg = new self;
-        $bg->type = self::TYPE_SOLID;
+        $bg->type = BackgroundType::SOLID->value;
         $bg->color = $hex;
 
         return $bg;
@@ -64,10 +55,10 @@ class Background implements Stringable
      * @param  string  $direction  The gradient direction.
      * @param  string  $style  The gradient style.
      */
-    public static function gradient(string $start, string $end, string $direction = 'bottom', string $style = self::GRADIENT_STYLE_SHARP): self
+    public static function gradient(string $start, string $end, string $direction = GradientDirection::BOTTOM->value, string $style = GradientStyle::SHARP->value): self
     {
         $bg = new self;
-        $bg->type = self::TYPE_GRADIENT;
+        $bg->type = BackgroundType::GRADIENT->value;
         $bg->color_start = $start;
         $bg->color_end = $end;
         $bg->gradient_direction = $direction;
@@ -82,7 +73,7 @@ class Background implements Stringable
     public static function multicolor(): self
     {
         $bg = new self;
-        $bg->type = self::TYPE_MULTICOLOR;
+        $bg->type = BackgroundType::MULTICOLOR->value;
 
         return $bg;
     }
@@ -95,7 +86,7 @@ class Background implements Stringable
     public static function fromForm(array $state): self
     {
         $bg = new self;
-        $bg->type = $state['type'] ?? self::TYPE_NONE;
+        $bg->type = $state['type'] ?? BackgroundType::NONE->value;
         $bg->color = $state['color'] ?? null;
         $bg->color_start = $state['color_start'] ?? null;
         $bg->color_end = $state['color_end'] ?? null;
@@ -133,14 +124,14 @@ class Background implements Stringable
      */
     public function hasRenderableCss(): bool
     {
-        if ($this->type === self::TYPE_SOLID) {
+        if ($this->type === BackgroundType::SOLID->value) {
             return ! empty($this->color);
         }
-        if ($this->type === self::TYPE_GRADIENT) {
+        if ($this->type === BackgroundType::GRADIENT->value) {
             return ! empty($this->color_start) && ! empty($this->color_end);
         }
 
-        return $this->type === self::TYPE_MULTICOLOR;
+        return $this->type === BackgroundType::MULTICOLOR->value;
     }
 
     /**
@@ -149,8 +140,8 @@ class Background implements Stringable
     public function __toString(): string
     {
         return match ($this->type) {
-            self::TYPE_SOLID => $this->color ? "background-color: {$this->color};" : '',
-            self::TYPE_GRADIENT => $this->renderGradient(),
+            BackgroundType::SOLID->value => $this->color ? "background-color: {$this->color};" : '',
+            BackgroundType::GRADIENT->value => $this->renderGradient(),
             default => '',
         };
     }
@@ -160,11 +151,11 @@ class Background implements Stringable
      */
     private function renderGradient(): string
     {
-        $direction = $this->gradient_direction ?: 'bottom';
+        $direction = $this->gradient_direction ?: GradientDirection::BOTTOM->value;
         $start = $this->color_start ?: '#000000';
         $end = $this->color_end ?: '#000000';
 
-        if ($this->gradient_style === self::GRADIENT_STYLE_SOFT) {
+        if ($this->gradient_style === GradientStyle::SOFT->value) {
             return "background-image: linear-gradient(to {$direction}, {$start} 0%, {$end} 100%);";
         }
 
@@ -176,7 +167,7 @@ class Background implements Stringable
      */
     public function isSolid(): bool
     {
-        return $this->type === self::TYPE_SOLID;
+        return $this->type === BackgroundType::SOLID->value;
     }
 
     /**
@@ -184,7 +175,7 @@ class Background implements Stringable
      */
     public function isGradient(): bool
     {
-        return $this->type === self::TYPE_GRADIENT;
+        return $this->type === BackgroundType::GRADIENT->value;
     }
 
     /**
@@ -192,7 +183,7 @@ class Background implements Stringable
      */
     public function isMulticolor(): bool
     {
-        return $this->type === self::TYPE_MULTICOLOR;
+        return $this->type === BackgroundType::MULTICOLOR->value;
     }
 
     /**
@@ -221,7 +212,7 @@ class Background implements Stringable
         if (! $data) {
             return $bg;
         }
-        $bg->type = $data['type'] ?? self::TYPE_NONE;
+        $bg->type = $data['type'] ?? BackgroundType::NONE->value;
         $bg->color = $data['color'] ?? null;
         $bg->color_start = $data['color_start'] ?? null;
         $bg->color_end = $data['color_end'] ?? null;

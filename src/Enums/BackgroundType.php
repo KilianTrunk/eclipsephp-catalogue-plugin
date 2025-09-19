@@ -2,7 +2,9 @@
 
 namespace Eclipse\Catalogue\Enums;
 
-enum BackgroundType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum BackgroundType: string implements HasLabel
 {
     case NONE = 'n';
     case SOLID = 's';
@@ -12,7 +14,7 @@ enum BackgroundType: string
     /**
      * Get the label for the background type.
      */
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match ($this) {
             self::NONE => 'None',

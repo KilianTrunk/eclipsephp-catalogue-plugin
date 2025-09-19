@@ -33,9 +33,11 @@ class Product extends Model implements HasMedia
         'gross_weight',
         'name',
         'product_type_id',
+        'category_id',
         'short_description',
         'description',
         'origin_country_id',
+        'tariff_code_id',
         'meta_description',
         'meta_title',
     ];
@@ -78,7 +80,17 @@ class Product extends Model implements HasMedia
 
     protected static array $uniqueFlagsPerTenant = [];
 
-    protected static array $tenantAttributes = ['sorting_label', 'available_from_date', 'category_id'];
+    protected static array $tenantAttributes = [
+        'sorting_label',
+        'available_from_date',
+        'category_id',
+        'product_status_id',
+    ];
+
+    public function status(): ?ProductStatus
+    {
+        return $this->currentTenantData()?->status;
+    }
 
     public function category(): ?Category
     {
@@ -113,6 +125,11 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(Country::class, 'origin_country_id', 'id');
     }
 
+    public function tariffCode(): BelongsTo
+    {
+        return $this->belongsTo(\Eclipse\World\Models\TariffCode::class, 'tariff_code_id');
+    }
+
     /**
      * Get all per-tenant data rows for this product.
      */
@@ -135,6 +152,14 @@ class Product extends Model implements HasMedia
     public function getHasFreeDeliveryAttribute(): bool
     {
         return $this->getTenantFlagValue('has_free_delivery');
+    }
+
+    /**
+     * Prices relationship.
+     */
+    public function prices(): HasMany
+    {
+        return $this->hasMany(\Eclipse\Catalogue\Models\Product\Price::class);
     }
 
     public function getAvailableFromDateAttribute()
@@ -229,6 +254,10 @@ class Product extends Model implements HasMedia
     {
         $data = $this->createSearchableArray();
 
+        if ($this->tariffCode) {
+            $data['tariff_code'] = $this->tariffCode->code;
+        }
+
         $customValues = $this->customPropertyValues()->with('property')->get();
 
         foreach ($customValues as $customValue) {
@@ -307,6 +336,11 @@ class Product extends Model implements HasMedia
                         'type' => 'int32',
                         'optional' => true,
                     ],
+                    [
+                        'name' => 'tariff_code',
+                        'type' => 'string',
+                        'optional' => true,
+                    ],
                 ],
             ],
             'search-parameters' => [
@@ -316,6 +350,7 @@ class Product extends Model implements HasMedia
                     'name_*',
                     'short_description_*',
                     'description_*',
+                    'tariff_code',
                     'cprop_*',
                 ]),
             ],
