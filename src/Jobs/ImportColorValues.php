@@ -202,7 +202,7 @@ class ImportColorValues extends QueueableJob
         }
 
         if ($this->status === \Eclipse\Common\Enums\JobStatus::FAILED) {
-            return __('eclipse-catalogue::property-value.notifications.import_queued.title');
+            return __('eclipse-catalogue::property-value.notifications.import_failed.title');
         }
 
         return parent::getNotificationTitle();

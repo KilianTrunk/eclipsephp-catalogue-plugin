@@ -26,7 +26,7 @@ return [
         'info_url' => 'Optional "read more" link',
         'image' => 'Optional image for this value (e.g., brand logo)',
         'sort' => 'Lower numbers appear first',
-        'import_file' => 'Upload an Excel (.xlsx, .xls) or CSV file with two columns: name and hex. Example: Red, #FF0000',
+        'import_file' => 'Upload an Excel (.xlsx, .xls) or CSV file with two columns: <strong>name</strong> and <strong>hex</strong>. Example: Red, #FF0000',
     ],
 
     'table' => [
@@ -96,6 +96,9 @@ return [
             'title' => 'Import Completed',
             'body' => 'Import completed: :inserted inserted, :skipped skipped, :errors errors.',
             'errors' => 'Errors',
+        ],
+        'import_failed' => [
+            'title' => 'Import Failed',
         ],
     ],
 ];

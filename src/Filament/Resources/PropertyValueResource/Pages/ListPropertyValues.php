@@ -89,7 +89,7 @@ class ListPropertyValues extends ListRecords
                 ->form([
                     \Filament\Forms\Components\FileUpload::make('file')
                         ->label(__('eclipse-catalogue::property-value.fields.import_file'))
-                        ->helperText(__('eclipse-catalogue::property-value.help_text.import_file'))
+                        ->helperText(new \Illuminate\Support\HtmlString(__('eclipse-catalogue::property-value.help_text.import_file')))
                         ->acceptedFileTypes(['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'])
                         ->required()
                         ->disk('local')
