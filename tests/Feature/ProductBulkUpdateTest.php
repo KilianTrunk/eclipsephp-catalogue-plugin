@@ -77,7 +77,6 @@ it('groups add/remove are tenant-aware', function (): void {
 
     // Try to add other-tenant group: should be ignored (scoped out)
     $updater->apply([
-        'update_groups' => true,
         'groups_add_ids' => [$gOther->id],
     ], [$product]);
 
@@ -85,7 +84,6 @@ it('groups add/remove are tenant-aware', function (): void {
 
     // Add current tenant group: should attach
     $updater->apply([
-        'update_groups' => true,
         'groups_add_ids' => [$gCurrent->id],
     ], [$product]);
 
@@ -93,7 +91,6 @@ it('groups add/remove are tenant-aware', function (): void {
 
     // Remove it again
     $updater->apply([
-        'update_groups' => true,
         'groups_remove_ids' => [$gCurrent->id],
     ], [$product]);
 

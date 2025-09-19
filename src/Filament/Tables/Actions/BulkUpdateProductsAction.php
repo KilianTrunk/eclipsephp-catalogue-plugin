@@ -14,7 +14,6 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Support\Facades\App;
@@ -30,8 +29,9 @@ class BulkUpdateProductsAction extends BulkAction
     public static function make(?string $name = null): static
     {
         $action = parent::make($name ?? 'bulk_update')
-            ->label('Bulk Update')
+            ->label('Edit')
             ->icon('heroicon-o-wrench')
+            ->modalHeading('Bulk edit')
             ->deselectRecordsAfterCompletion()
             ->form([
                 Select::make('product_status_id')
@@ -97,6 +97,7 @@ class BulkUpdateProductsAction extends BulkAction
                             '0' => $no,
                         ];
                     })
+                    ->selectablePlaceholder(false)
                     ->default('__no_change__'),
                 Select::make('category_id')
                     ->label('Category')
@@ -119,27 +120,24 @@ class BulkUpdateProductsAction extends BulkAction
                     ->collapsible()
                     ->collapsed()
                     ->schema([
-                        Toggle::make('update_groups')
-                            ->label('Update groups')
-                            ->helperText('Enable to add or remove selected products to/from groups.'),
-                        Select::make('groups_add_ids')
-                            ->label('Add to groups')
-                            ->multiple()
-                            ->options(fn () => Group::query()->forCurrentTenant()->pluck('name', 'id')->toArray())
-                            ->searchable(),
-                        Select::make('groups_remove_ids')
-                            ->label('Remove from groups')
-                            ->multiple()
-                            ->options(fn () => Group::query()->forCurrentTenant()->pluck('name', 'id')->toArray())
-                            ->searchable(),
+                        \Filament\Forms\Components\Grid::make(2)
+                            ->schema([
+                                Select::make('groups_add_ids')
+                                    ->label('Add to groups')
+                                    ->multiple()
+                                    ->options(fn () => Group::query()->forCurrentTenant()->pluck('name', 'id')->toArray())
+                                    ->searchable(),
+                                Select::make('groups_remove_ids')
+                                    ->label('Remove from groups')
+                                    ->multiple()
+                                    ->options(fn () => Group::query()->forCurrentTenant()->pluck('name', 'id')->toArray())
+                                    ->searchable(),
+                            ]),
                     ]),
                 Section::make('Prices')
                     ->collapsible()
                     ->collapsed()
                     ->schema([
-                        Toggle::make('update_prices')
-                            ->label('Add price')
-                            ->helperText('Create or update price on selected products.'),
                         Select::make('price_list_id')
                             ->label(__('eclipse-catalogue::product.price.fields.price_list'))
                             ->options(function () {
@@ -171,67 +169,84 @@ class BulkUpdateProductsAction extends BulkAction
                                 if ($pl) {
                                     $set('tax_included', (bool) $pl->tax_included);
                                 }
-                            }),
-                        TextInput::make('price')
-                            ->label(__('eclipse-catalogue::product.price.fields.price'))
-                            ->numeric()
-                            ->rule('decimal:0,5'),
-                        DatePicker::make('valid_from')
-                            ->label(__('eclipse-catalogue::product.price.fields.valid_from'))
-                            ->native(false)
-                            ->default(fn () => now()),
-                        DatePicker::make('valid_to')
-                            ->label(__('eclipse-catalogue::product.price.fields.valid_to'))
-                            ->native(false)
-                            ->nullable(),
-                        Checkbox::make('tax_included')
-                            ->label(__('eclipse-catalogue::product.price.fields.tax_included'))
-                            ->inline(false)
-                            ->default(false),
+                            })
+                            ->columnSpanFull(),
+
+                        \Filament\Forms\Components\Grid::make(2)
+                            ->schema([
+                                \Filament\Forms\Components\Group::make()
+                                    ->schema([
+                                        TextInput::make('price')
+                                            ->label(__('eclipse-catalogue::product.price.fields.price'))
+                                            ->numeric()
+                                            ->rule('decimal:0,5'),
+                                        Checkbox::make('tax_included')
+                                            ->label(__('eclipse-catalogue::product.price.fields.tax_included'))
+                                            ->inline(false)
+                                            ->default(false),
+                                    ]),
+                                \Filament\Forms\Components\Group::make()
+                                    ->schema([
+                                        DatePicker::make('valid_from')
+                                            ->label(__('eclipse-catalogue::product.price.fields.valid_from'))
+                                            ->native(false)
+                                            ->default(fn () => now()),
+                                        DatePicker::make('valid_to')
+                                            ->label(__('eclipse-catalogue::product.price.fields.valid_to'))
+                                            ->native(false)
+                                            ->nullable(),
+                                    ]),
+                            ]),
                     ]),
                 Section::make('Images')
                     ->collapsible()
                     ->collapsed()
                     ->schema([
-                        Toggle::make('update_images')
-                            ->label('Update images')
-                            ->helperText('You can add new product images here. Any image that already exists on the specified position will be replaced.'),
-                        FileUpload::make('cover_image')
-                            ->label('Cover image')
-                            ->image()
-                            ->imageEditor(false)
-                            ->directory('temp-images')
-                            ->visibility('public')
-                            ->storeFiles(true)
-                            ->preserveFilenames()
-                            ->nullable(),
-                        FileUpload::make('image_1')
-                            ->label('Image #1')
-                            ->image()
-                            ->imageEditor(false)
-                            ->directory('temp-images')
-                            ->visibility('public')
-                            ->storeFiles(true)
-                            ->preserveFilenames()
-                            ->nullable(),
-                        FileUpload::make('image_2')
-                            ->label('Image #2')
-                            ->image()
-                            ->imageEditor(false)
-                            ->directory('temp-images')
-                            ->visibility('public')
-                            ->storeFiles(true)
-                            ->preserveFilenames()
-                            ->nullable(),
-                        FileUpload::make('image_3')
-                            ->label('Image #3')
-                            ->image()
-                            ->imageEditor(false)
-                            ->directory('temp-images')
-                            ->visibility('public')
-                            ->storeFiles(true)
-                            ->preserveFilenames()
-                            ->nullable(),
+                        \Filament\Forms\Components\Grid::make(2)
+                            ->schema([
+                                \Filament\Forms\Components\Group::make()
+                                    ->schema([
+                                        FileUpload::make('cover_image')
+                                            ->label('Cover image')
+                                            ->image()
+                                            ->imageEditor(false)
+                                            ->directory('temp-images')
+                                            ->visibility('public')
+                                            ->storeFiles(true)
+                                            ->preserveFilenames()
+                                            ->nullable(),
+                                        FileUpload::make('image_2')
+                                            ->label('Image #2')
+                                            ->image()
+                                            ->imageEditor(false)
+                                            ->directory('temp-images')
+                                            ->visibility('public')
+                                            ->storeFiles(true)
+                                            ->preserveFilenames()
+                                            ->nullable(),
+                                    ]),
+                                \Filament\Forms\Components\Group::make()
+                                    ->schema([
+                                        FileUpload::make('image_1')
+                                            ->label('Image #1')
+                                            ->image()
+                                            ->imageEditor(false)
+                                            ->directory('temp-images')
+                                            ->visibility('public')
+                                            ->storeFiles(true)
+                                            ->preserveFilenames()
+                                            ->nullable(),
+                                        FileUpload::make('image_3')
+                                            ->label('Image #3')
+                                            ->image()
+                                            ->imageEditor(false)
+                                            ->directory('temp-images')
+                                            ->visibility('public')
+                                            ->storeFiles(true)
+                                            ->preserveFilenames()
+                                            ->nullable(),
+                                    ]),
+                            ]),
                     ]),
             ])
             ->action(function (array $data, $records) {

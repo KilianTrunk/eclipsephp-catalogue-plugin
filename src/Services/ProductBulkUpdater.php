@@ -22,10 +22,8 @@ class ProductBulkUpdater
         $successCount = 0;
         $errors = [];
 
-        $shouldUpdateGroups = (bool) ($data['update_groups'] ?? false);
         $groupAddIds = collect($data['groups_add_ids'] ?? [])->filter()->values()->all();
         $groupRemoveIds = collect($data['groups_remove_ids'] ?? [])->filter()->values()->all();
-        $shouldUpdateImages = (bool) ($data['update_images'] ?? false);
         $coverImage = $data['cover_image'] ?? null;
         $image1 = $data['image_1'] ?? null;
         $image2 = $data['image_2'] ?? null;
@@ -46,7 +44,6 @@ class ProductBulkUpdater
         $bulkStatusId = array_key_exists('product_status_id', $data)
             ? ($data['product_status_id'] === '__no_change__' ? null : $data['product_status_id'])
             : null;
-        $shouldUpdatePrices = (bool) ($data['update_prices'] ?? false);
         $bulkPriceListId = array_key_exists('price_list_id', $data) ? $data['price_list_id'] : null;
         $bulkPrice = array_key_exists('price', $data) ? $data['price'] : null;
         $bulkValidFrom = array_key_exists('valid_from', $data) ? $data['valid_from'] : null;
@@ -56,18 +53,19 @@ class ProductBulkUpdater
         foreach ($products as $product) {
             try {
                 $changed = DB::transaction(function () use (
-                    $shouldUpdateGroups, $groupAddIds, $groupRemoveIds,
-                    $shouldUpdateImages, $coverImage, $image1, $image2, $image3,
+                    $groupAddIds, $groupRemoveIds,
+                    $coverImage, $image1, $image2, $image3,
                     $shouldUpdateCategories, $bulkCategoryId,
                     $shouldUpdateType, $bulkTypeId,
                     $shouldUpdateFreeDelivery, $bulkFreeDelivery,
                     $shouldUpdateStatus, $bulkStatusId,
-                    $shouldUpdatePrices, $bulkPriceListId, $bulkPrice, $bulkValidFrom, $bulkValidTo, $bulkTaxIncluded,
+                    $bulkPriceListId, $bulkPrice, $bulkValidFrom, $bulkValidTo, $bulkTaxIncluded,
                     $product
                 ) {
                     $didChange = false;
 
-                    if ($shouldUpdateGroups) {
+                    // Groups: infer intent if add/remove arrays provided
+                    if (! empty($groupAddIds) || ! empty($groupRemoveIds)) {
                         if (! empty($groupAddIds)) {
                             $validAddIds = Group::query()->forCurrentTenant()->whereIn('id', $groupAddIds)->pluck('id')->all();
                             if (! empty($validAddIds)) {
@@ -84,7 +82,8 @@ class ProductBulkUpdater
                         }
                     }
 
-                    if ($shouldUpdateImages) {
+                    // Images: infer intent if any image value provided
+                    if ($coverImage || $image1 || $image2 || $image3) {
                         $addMediaFromValue = function ($fileValue) use ($product) {
                             if (! $fileValue) {
                                 return null;
@@ -195,24 +194,23 @@ class ProductBulkUpdater
                         }
                     }
 
-                    if ($shouldUpdatePrices) {
-                        if ($bulkPriceListId && $bulkPrice !== null && $bulkValidFrom) {
-                            $price = ProductPrice::query()->firstOrNew([
-                                'product_id' => $product->id,
-                                'price_list_id' => (int) $bulkPriceListId,
-                                'valid_from' => \Carbon\Carbon::parse($bulkValidFrom)->toDateString(),
-                            ]);
+                    // Prices: infer intent if price list selected and price present
+                    if ($bulkPriceListId && $bulkPrice !== null && $bulkValidFrom) {
+                        $price = ProductPrice::query()->firstOrNew([
+                            'product_id' => $product->id,
+                            'price_list_id' => (int) $bulkPriceListId,
+                            'valid_from' => \Carbon\Carbon::parse($bulkValidFrom)->toDateString(),
+                        ]);
 
-                            $original = $price->exists ? clone $price : null;
+                        $original = $price->exists ? clone $price : null;
 
-                            $price->price = $bulkPrice;
-                            $price->valid_to = $bulkValidTo ? \Carbon\Carbon::parse($bulkValidTo)->toDateString() : null;
-                            $price->tax_included = (bool) $bulkTaxIncluded;
-                            $price->save();
+                        $price->price = $bulkPrice;
+                        $price->valid_to = $bulkValidTo ? \Carbon\Carbon::parse($bulkValidTo)->toDateString() : null;
+                        $price->tax_included = (bool) $bulkTaxIncluded;
+                        $price->save();
 
-                            if (! $original || $original->price != $price->price || $original->valid_to != $price->valid_to || $original->tax_included != $price->tax_included) {
-                                $didChange = true;
-                            }
+                        if (! $original || $original->price != $price->price || $original->valid_to != $price->valid_to || $original->tax_included != $price->tax_included) {
+                            $didChange = true;
                         }
                     }
 
@@ -231,7 +229,8 @@ class ProductBulkUpdater
             }
         }
 
-        if ($shouldUpdateImages) {
+        // Cleanup temp files if we used image updates
+        if ($coverImage || $image1 || $image2 || $image3) {
             foreach ([$coverImage, $image1, $image2, $image3] as $val) {
                 if (is_string($val)) {
                     $p = storage_path('app/public/'.$val);
