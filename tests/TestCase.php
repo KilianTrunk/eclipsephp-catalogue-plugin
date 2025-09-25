@@ -18,6 +18,11 @@ abstract class TestCase extends BaseTestCase
 
     protected ?Site $site = null;
 
+    protected function getEnvironmentSetUp($app): void
+    {
+        $app['config']->set('filament-shield.register_role_policy', false);
+    }
+
     protected function setUp(): void
     {
         // Always show errors when testing
