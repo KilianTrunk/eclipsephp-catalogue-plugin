@@ -449,6 +449,6 @@ class PropertyValueResource extends Resource
             $query->where('property_id', request('property'));
         }
 
-        return $query->groupedOrder();
+        return $query->with(['group', 'members'])->groupedOrder();
     }
 }
