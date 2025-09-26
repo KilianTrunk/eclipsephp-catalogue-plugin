@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class TaxClass extends Model
 {
@@ -50,19 +51,15 @@ class TaxClass extends Model
             if ($tenantModel && $tenantFK) {
                 $tenant = Filament::getTenant();
 
-                if ($tenant) {
-                    $model->{$tenantFK} = $tenant->id;
-                } else {
-                    // Set default tenant ID when no Filament tenant is available
-                    $defaultTenant = $tenantModel::first();
-                    if ($defaultTenant) {
-                        $model->{$tenantFK} = $defaultTenant->id;
-                    }
+                if (empty($tenant)) {
+                    throw new RuntimeException('Tenancy is enabled, but no tenant is set');
                 }
+
+                $model->{$tenantFK} = $tenant->id;
             }
         });
 
-        static::saving(function ($model) {
+        static::saving(function (self $model) {
             // If this class is being set as default, unset all other defaults within the same tenant
             if ($model->is_default) {
                 $query = static::where('is_default', true)
@@ -79,7 +76,7 @@ class TaxClass extends Model
             }
         });
 
-        static::deleting(function ($model) {
+        static::deleting(function (self $model) {
             // Prevent deletion of default class
             if ($model->is_default) {
                 throw ValidationException::withMessages([
