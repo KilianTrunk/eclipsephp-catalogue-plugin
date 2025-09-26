@@ -2,6 +2,7 @@
 
 namespace Eclipse\Catalogue\Models;
 
+use Eclipse\Catalogue\Casts\BackgroundCast;
 use Eclipse\Catalogue\Factories\PropertyValueFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +27,7 @@ class PropertyValue extends Model implements HasMedia
         'image',
         'is_group',
         'group_value_id',
+        'color',
     ];
 
     public array $translatable = [
@@ -39,6 +41,7 @@ class PropertyValue extends Model implements HasMedia
         'property_id' => 'integer',
         'is_group' => 'boolean',
         'group_value_id' => 'integer',
+        'color' => BackgroundCast::class,
     ];
 
     public function property(): BelongsTo
@@ -113,7 +116,38 @@ class PropertyValue extends Model implements HasMedia
             $attributes['image'] = $translation !== '' ? $translation : null;
         }
 
+        if (array_key_exists('color', $this->attributes)) {
+            $raw = $this->attributes['color'];
+            if (is_string($raw) && $raw !== '') {
+                $decoded = json_decode($raw, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $attributes['color'] = $decoded;
+                }
+            } elseif (is_object($this->getAttribute('color')) && method_exists($this->getAttribute('color'), 'toArray')) {
+                $attributes['color'] = $this->getAttribute('color')->toArray();
+            } else {
+                $attributes['color'] = null;
+            }
+        }
+
         return $attributes;
+    }
+
+    /**
+     * Get the color of the property value.
+     */
+    public function getColor(): ?string
+    {
+        if (! array_key_exists('color', $this->attributes)) {
+            return null;
+        }
+
+        $bg = $this->getAttribute('color');
+        if (is_object($bg)) {
+            return (string) $bg;
+        }
+
+        return null;
     }
 
     /**
