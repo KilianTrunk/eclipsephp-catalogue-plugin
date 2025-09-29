@@ -83,23 +83,15 @@ class EditProduct extends EditRecord
         if (! $tenantFK) {
             $recordData = $this->record->productData()->first();
             if ($recordData) {
-                $tenantAttributes = $this->record->getTenantAttributes();
-                $tenantFlags = $this->record->getTenantFlags();
-
-                foreach ($tenantAttributes as $attribute) {
-                    if ($attribute === 'groups') {
-                        $groups = $this->record->groups()->pluck('id')->toArray();
-                        $data[$attribute] = $groups;
-                    } else {
-                        $value = $recordData->getAttribute($attribute);
-                        $data[$attribute] = $value;
-                    }
-                }
-
-                foreach ($tenantFlags as $flag) {
-                    $data[$flag] = $recordData->getAttribute($flag);
-                }
+                $data['is_active'] = $recordData->is_active;
+                $data['has_free_delivery'] = $recordData->has_free_delivery;
+                $data['available_from_date'] = $recordData->available_from_date;
+                $data['sorting_label'] = $recordData->sorting_label;
+                $data['category_id'] = $recordData->category_id ?? null;
+                $data['product_status_id'] = $recordData->product_status_id ?? null;
             }
+
+            $data['groups'] = $this->record->groups()->pluck('pim_group.id')->toArray();
 
             return $data;
         }
@@ -107,34 +99,23 @@ class EditProduct extends EditRecord
         $tenantData = [];
         $dataRecords = $this->record->productData;
 
-        $tenantAttributes = $this->record->getTenantAttributes();
-        $tenantFlags = $this->record->getTenantFlags();
-
         foreach ($dataRecords as $tenantRecord) {
             $tenantId = $tenantRecord->getAttribute($tenantFK);
-            $tenantData[$tenantId] = [];
-
-            foreach ($tenantAttributes as $attribute) {
-                if ($attribute === 'groups') {
-                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
-                    $groups = $this->record->groups()
-                        ->where("pim_group.{$tenantFK}", $tenantId)
-                        ->pluck('id')
-                        ->toArray();
-                    $tenantData[$tenantId][$attribute] = $groups;
-                } else {
-                    $value = $tenantRecord->getAttribute($attribute);
-                    $tenantData[$tenantId][$attribute] = $value;
-                }
-            }
-
-            foreach ($tenantFlags as $flag) {
-                $tenantData[$tenantId][$flag] = $tenantRecord->getAttribute($flag);
-            }
+            $tenantData[$tenantId] = [
+                'is_active' => $tenantRecord->is_active,
+                'has_free_delivery' => $tenantRecord->has_free_delivery,
+                'available_from_date' => $tenantRecord->available_from_date,
+                'sorting_label' => $tenantRecord->sorting_label,
+                'category_id' => $tenantRecord->category_id ?? null,
+                'product_status_id' => $tenantRecord->product_status_id ?? null,
+                'groups' => $this->record->groups()
+                    ->where('pim_group.'.config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
+                    ->pluck('pim_group.id')
+                    ->toArray(),
+            ];
         }
 
         $data['tenant_data'] = $tenantData;
-        $data['all_tenant_data'] = $tenantData;
         $currentTenant = \Filament\Facades\Filament::getTenant();
         $data['selected_tenant'] = $currentTenant?->id;
 
