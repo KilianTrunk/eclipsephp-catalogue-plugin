@@ -46,6 +46,56 @@ class TenantSwitcher extends LivewireComponent
     }
 
     /**
+     * Load tenant data from database when switching to a tenant that doesn't have data in all_tenant_data
+     */
+    protected static function loadTenantDataFromDatabase($tenantId, callable $set, callable $get, $livewire)
+    {
+        $record = $livewire->record ?? null;
+        if (! $record) {
+            return;
+        }
+
+        $tenantFK = config('eclipse-catalogue.tenancy.foreign_key');
+        if (! $tenantFK) {
+            return;
+        }
+
+        $tenantRecord = $record->productData()
+            ->where($tenantFK, $tenantId)
+            ->first();
+
+        if ($tenantRecord) {
+            $tenantAttributes = $record->getTenantAttributes();
+            $tenantFlags = $record->getTenantFlags();
+            $tenantData = [];
+
+            foreach ($tenantAttributes as $attribute) {
+                if ($attribute === 'groups') {
+                    $tenantFK = config('eclipse-catalogue.tenancy.foreign_key', 'site_id');
+                    $groups = $record->groups()
+                        ->where("pim_group.{$tenantFK}", $tenantId)
+                        ->pluck('id')
+                        ->toArray();
+                    $tenantData[$attribute] = $groups;
+                } else {
+                    $value = $tenantRecord->getAttribute($attribute);
+                    $tenantData[$attribute] = $value;
+                }
+            }
+
+            foreach ($tenantFlags as $flag) {
+                $value = $tenantRecord->getAttribute($flag);
+                $tenantData[$flag] = $value;
+            }
+
+            $set("tenant_data.{$tenantId}", $tenantData);
+            $allTenantData = $get('all_tenant_data') ?? [];
+            $allTenantData[$tenantId] = $tenantData;
+            $set('all_tenant_data', $allTenantData);
+        }
+    }
+
+    /**
      * Create a Filament Select component used within the form schema.
      */
     public static function make(string $fieldName = 'selected_tenant'): Component
@@ -94,6 +144,8 @@ class TenantSwitcher extends LivewireComponent
                 $allTenantData = $get('all_tenant_data') ?? [];
                 if (isset($allTenantData[$state])) {
                     $set("tenant_data.{$state}", $allTenantData[$state]);
+                } else {
+                    static::loadTenantDataFromDatabase($state, $set, $get, $livewire);
                 }
 
                 // Trigger form update when tenant changes
@@ -146,6 +198,14 @@ class TenantSwitcher extends LivewireComponent
                 }
 
                 $set('_previous_tenant', $state);
+                $allTenantData = $get('all_tenant_data') ?? [];
+
+                if (isset($allTenantData[$state])) {
+                    $set("tenant_data.{$state}", $allTenantData[$state]);
+                } else {
+                    static::loadTenantDataFromDatabase($state, $set, $get, $livewire);
+                }
+
                 $livewire->dispatch('tenant-changed', $state);
             });
 
