@@ -89,6 +89,9 @@ class EditProduct extends EditRecord
                 $data['sorting_label'] = $recordData->sorting_label;
                 $data['category_id'] = $recordData->category_id ?? null;
                 $data['product_status_id'] = $recordData->product_status_id ?? null;
+                $data['stock'] = $recordData->stock;
+                $data['min_stock'] = $recordData->min_stock;
+                $data['date_stocked'] = $recordData->date_stocked;
             }
 
             $data['groups'] = $this->record->groups()->pluck('pim_group.id')->toArray();
@@ -108,6 +111,9 @@ class EditProduct extends EditRecord
                 'sorting_label' => $tenantRecord->sorting_label,
                 'category_id' => $tenantRecord->category_id ?? null,
                 'product_status_id' => $tenantRecord->product_status_id ?? null,
+                'stock' => $tenantRecord->stock,
+                'min_stock' => $tenantRecord->min_stock,
+                'date_stocked' => $tenantRecord->date_stocked,
                 'groups' => $this->record->groups()
                     ->where('pim_group.'.config('eclipse-catalogue.tenancy.foreign_key', 'site_id'), $tenantId)
                     ->pluck('pim_group.id')
