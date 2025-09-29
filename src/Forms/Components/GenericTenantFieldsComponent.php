@@ -53,22 +53,8 @@ class GenericTenantFieldsComponent
 
                 // Hidden field to store all tenant data
                 \Filament\Forms\Components\Hidden::make('all_tenant_data')
-                    ->default(function (Get $get) {
-                        $tenantData = $get('tenant_data') ?? [];
-                        $allTenantData = $get('all_tenant_data') ?? [];
-
-                        return array_merge($allTenantData, $tenantData);
-                    })
-                    ->dehydrated(true)
-                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                        $selectedTenant = $get('selected_tenant');
-                        if ($selectedTenant) {
-                            $currentData = $get("tenant_data.{$selectedTenant}") ?? [];
-                            $allTenantData = $get('all_tenant_data') ?? [];
-                            $allTenantData[$selectedTenant] = $currentData;
-                            $set('all_tenant_data', $allTenantData);
-                        }
-                    }),
+                    ->default([])
+                    ->dehydrated(true),
 
                 // Hidden field to track previous tenant for switching logic
                 \Filament\Forms\Components\Hidden::make('_previous_tenant')
@@ -137,8 +123,13 @@ class GenericTenantFieldsComponent
         if ($extraFieldsBuilder) {
             $extra = $extraFieldsBuilder($tenantId, $tenantName);
             if (is_array($extra)) {
+                // For extra fields, also persist on change if supported
                 $enhancedExtra = [];
                 foreach ($extra as $component) {
+                    // Ensure extra components push state immediately while editing
+                    if (method_exists($component, 'live')) {
+                        $component = $component->live();
+                    }
                     if (method_exists($component, 'afterStateUpdated')) {
                         $component = $component->afterStateUpdated(function ($state, Set $set, Get $get) use ($tenantId) {
                             $currentData = $get("tenant_data.{$tenantId}") ?? [];
