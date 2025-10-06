@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use Eclipse\Catalogue\Filament\Resources\CategoryResource\Pages\EditCategory;
 use Eclipse\Catalogue\Filament\Resources\CategoryResource\Pages\ListCategories;
@@ -45,7 +44,7 @@ use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
-class CategoryResource extends Resource implements HasShieldPermissions
+class CategoryResource extends Resource
 {
     use Translatable;
 
@@ -387,21 +386,5 @@ class CategoryResource extends Resource implements HasShieldPermissions
     public static function getGloballySearchableAttributes(): array
     {
         return ['name', 'short_desc', 'description', 'sef_key', 'code'];
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'restore',
-            'restore_any',
-            'delete',
-            'delete_any',
-            'force_delete',
-            'force_delete_any',
-        ];
     }
 }

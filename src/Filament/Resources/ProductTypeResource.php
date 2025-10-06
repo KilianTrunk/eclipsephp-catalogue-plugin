@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Resources\ProductTypeResource\Pages\CreateProductType;
 use Eclipse\Catalogue\Filament\Resources\ProductTypeResource\Pages\EditProductType;
 use Eclipse\Catalogue\Filament\Resources\ProductTypeResource\Pages\ListProductTypes;
@@ -22,7 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
-class ProductTypeResource extends Resource implements HasShieldPermissions
+class ProductTypeResource extends Resource
 {
     use Translatable;
 
@@ -118,21 +117,5 @@ class ProductTypeResource extends Resource implements HasShieldPermissions
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'restore',
-            'restore_any',
-            'delete',
-            'delete_any',
-            'force_delete',
-            'force_delete_any',
-        ];
     }
 }

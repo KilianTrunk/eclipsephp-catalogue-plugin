@@ -112,17 +112,16 @@ abstract class TestCase extends BaseTestCase
     {
         $resources = [
             'category',
-            'custom::property',
             'group',
-            'measure::unit',
-            'price::list',
+            'measure_unit',
+            'price_list',
             'product',
-            'product::status',
-            'product::type',
+            'product_status',
+            'product_type',
             'property',
-            'property::value',
+            'property_value',
             'role',
-            'tax::class',
+            'tax_class',
         ];
 
         $permissions = [

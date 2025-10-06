@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Resources\GroupResource\Pages\CreateGroup;
 use Eclipse\Catalogue\Filament\Resources\GroupResource\Pages\EditGroup;
 use Eclipse\Catalogue\Filament\Resources\GroupResource\Pages\ListGroups;
@@ -28,7 +27,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-class GroupResource extends Resource implements HasShieldPermissions
+class GroupResource extends Resource
 {
     protected static ?string $model = Group::class;
 
@@ -184,17 +183,5 @@ class GroupResource extends Resource implements HasShieldPermissions
         return array_filter([
             'Code' => $record->code,
         ]);
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'delete',
-            'delete_any',
-        ];
     }
 }

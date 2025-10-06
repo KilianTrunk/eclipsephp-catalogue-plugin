@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages\CreateTaxClass;
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages\EditTaxClass;
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages\ListTaxClasses;
@@ -25,7 +24,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class TaxClassResource extends Resource implements HasShieldPermissions
+class TaxClassResource extends Resource
 {
     protected static ?string $model = TaxClass::class;
 
@@ -164,21 +163,5 @@ class TaxClassResource extends Resource implements HasShieldPermissions
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'restore',
-            'restore_any',
-            'delete',
-            'delete_any',
-            'force_delete',
-            'force_delete_any',
-        ];
     }
 }

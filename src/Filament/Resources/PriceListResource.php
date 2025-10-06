@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Filament\Resources\PriceListResource\Pages\CreatePriceList;
 use Eclipse\Catalogue\Filament\Resources\PriceListResource\Pages\EditPriceList;
 use Eclipse\Catalogue\Filament\Resources\PriceListResource\Pages\ListPriceLists;
@@ -20,7 +19,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class PriceListResource extends Resource implements HasShieldPermissions
+class PriceListResource extends Resource
 {
     protected static ?string $model = PriceList::class;
 
@@ -121,21 +120,5 @@ class PriceListResource extends Resource implements HasShieldPermissions
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'restore',
-            'restore_any',
-            'delete',
-            'delete_any',
-            'force_delete',
-            'force_delete_any',
-        ];
     }
 }

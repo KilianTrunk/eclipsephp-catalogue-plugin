@@ -25,7 +25,7 @@ it('builds color group schema correctly', function () {
     expect($colorGroupSchema[0])->toBeInstanceOf(Group::class);
 
     // Group should contain 4 form components
-    $groupSchema = $colorGroupSchema[0]->getChildComponents();
+    $groupSchema = $colorGroupSchema[0]->getDefaultChildComponents();
     expect($groupSchema)->toHaveCount(4);
 
     // Verify component types: Radio (background type), ColorPicker, Grid (gradient), ViewField (preview)
@@ -43,7 +43,7 @@ it('configures color picker component', function () {
     $method->setAccessible(true);
 
     $colorGroupSchema = $method->invoke($resource);
-    $groupSchema = $colorGroupSchema[0]->getChildComponents();
+    $groupSchema = $colorGroupSchema[0]->getDefaultChildComponents();
     $colorPicker = $groupSchema[1];
 
     expect($colorPicker)->toBeInstanceOf(ColorPicker::class);
@@ -58,13 +58,13 @@ it('configures gradient grid component', function () {
     $method->setAccessible(true);
 
     $colorGroupSchema = $method->invoke($resource);
-    $groupSchema = $colorGroupSchema[0]->getChildComponents();
+    $groupSchema = $colorGroupSchema[0]->getDefaultChildComponents();
     $gradientGrid = $groupSchema[2];
 
     expect($gradientGrid)->toBeInstanceOf(Grid::class);
 
     // Should contain color_start, color_end, gradient_direction, gradient_style
-    $gridChildren = $gradientGrid->getChildComponents();
+    $gridChildren = $gradientGrid->getDefaultChildComponents();
     expect($gridChildren)->toHaveCount(4);
 });
 
@@ -76,7 +76,7 @@ it('configures color preview component', function () {
     $method->setAccessible(true);
 
     $colorGroupSchema = $method->invoke($resource);
-    $groupSchema = $colorGroupSchema[0]->getChildComponents();
+    $groupSchema = $colorGroupSchema[0]->getDefaultChildComponents();
     $previewField = $groupSchema[3];
 
     expect($previewField)->toBeInstanceOf(ViewField::class);

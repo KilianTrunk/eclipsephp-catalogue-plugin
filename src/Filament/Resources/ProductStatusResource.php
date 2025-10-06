@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Enums\StructuredData\ItemAvailability;
 use Eclipse\Catalogue\Filament\Resources\ProductStatusResource\Pages\CreateProductStatus;
 use Eclipse\Catalogue\Filament\Resources\ProductStatusResource\Pages\EditProductStatus;
@@ -29,7 +28,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
-class ProductStatusResource extends Resource implements HasShieldPermissions
+class ProductStatusResource extends Resource
 {
     use Translatable;
 
@@ -177,17 +176,5 @@ class ProductStatusResource extends Resource implements HasShieldPermissions
         }
 
         return $query;
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'delete',
-            'delete_any',
-        ];
     }
 }

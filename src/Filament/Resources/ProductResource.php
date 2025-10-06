@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Enums\PropertyInputType;
 use Eclipse\Catalogue\Filament\Filters\CustomPropertyConstraint;
 use Eclipse\Catalogue\Filament\Forms\Components\ImageManager;
@@ -64,7 +63,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
-class ProductResource extends Resource implements HasShieldPermissions
+class ProductResource extends Resource
 {
     use HandlesTenantData, HasTenantFields, Translatable;
 
@@ -997,22 +996,6 @@ class ProductResource extends Resource implements HasShieldPermissions
         $svg = view('eclipse-catalogue::components.placeholder-image')->render();
 
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'restore',
-            'restore_any',
-            'delete',
-            'delete_any',
-            'force_delete',
-            'force_delete_any',
-        ];
     }
 
     protected static function getCustomPropertyColumns(): array

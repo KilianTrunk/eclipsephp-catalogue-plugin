@@ -2,7 +2,6 @@
 
 namespace Eclipse\Catalogue\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Eclipse\Catalogue\Enums\PropertyInputType;
 use Eclipse\Catalogue\Enums\PropertyType;
 use Eclipse\Catalogue\Filament\Resources\PropertyResource\Pages\CreateProperty;
@@ -33,7 +32,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
-class PropertyResource extends Resource implements HasShieldPermissions
+class PropertyResource extends Resource
 {
     use Translatable;
 
@@ -267,22 +266,6 @@ class PropertyResource extends Resource implements HasShieldPermissions
             'index' => ListProperties::route('/'),
             'create' => CreateProperty::route('/create'),
             'edit' => EditProperty::route('/{record}/edit'),
-        ];
-    }
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'delete',
-            'delete_any',
-            'force_delete',
-            'force_delete_any',
-            'restore',
-            'restore_any',
         ];
     }
 }
