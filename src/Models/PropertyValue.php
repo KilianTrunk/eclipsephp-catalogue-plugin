@@ -48,7 +48,7 @@ class PropertyValue extends Model implements HasMedia
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'catalogue_product_has_property_value', 'property_value_id', 'product_id')
+        return $this->belongsToMany(Product::class, 'pim_product_has_property_value', 'property_value_id', 'product_id')
             ->withTimestamps();
     }
 
@@ -142,7 +142,7 @@ class PropertyValue extends Model implements HasMedia
                 throw new RuntimeException('Values must belong to the same property.');
             }
 
-            $pivotTable = 'catalogue_product_has_property_value';
+            $pivotTable = 'pim_product_has_property_value';
 
             $productIds = DB::table($pivotTable)
                 ->where('property_value_id', $this->id)
