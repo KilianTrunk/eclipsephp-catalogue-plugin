@@ -11,6 +11,7 @@ use Eclipse\Catalogue\Models\PropertyValue;
 use Eclipse\Catalogue\Values\Background;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -28,14 +29,16 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\View as SchemaView;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
-use Log;
 use Throwable;
 
 class PropertyValueResource extends Resource
@@ -119,7 +122,7 @@ class PropertyValueResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\ViewColumn::make('group_and_aliases')
+                ViewColumn::make('group_and_aliases')
                     ->label(__('eclipse-catalogue::property-value.table.columns.group'))
                     ->view('eclipse-catalogue::filament.columns.group-and-aliases')
                     ->extraAttributes(['class' => 'space-x-1']),
@@ -259,30 +262,39 @@ class PropertyValueResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('group_values')
+                    BulkAction::make('group_values')
                         ->label(__('eclipse-catalogue::property-value.table.actions.group_aliases'))
                         ->icon('heroicon-o-rectangle-group')
-                        ->form(function (\Filament\Tables\Actions\BulkAction $action) {
-                            $firstRecord = $action->getRecords()->first();
+                        ->form(function (\Filament\Actions\BulkAction $action) {
+                            $firstRecord = $action->getSelectedRecords()->first();
                             $derivedPropertyId = $firstRecord?->property_id ?? (request()->has('property') ? (int) request('property') : null);
 
                             return [
-                                \Filament\Forms\Components\View::make('eclipse-catalogue::filament.bulk.group-selected-preview')
+                                SchemaView::make('eclipse-catalogue::filament.bulk.group-selected-preview')
                                     ->statePath('selected_records')
                                     ->dehydrated(false)
                                     ->afterStateHydrated(function ($component) use ($action) {
-                                        $component->state($action->getRecords());
+                                        $records = $action->getSelectedRecordsQuery()->with(['group:id,value'])->get();
+                                        $items = $records->map(function (PropertyValue $record) {
+                                            return [
+                                                'id' => $record->id,
+                                                'value' => $record->value,
+                                                'is_group' => (bool) $record->is_group,
+                                                'group_value' => $record->group?->value,
+                                            ];
+                                        })->all();
+                                        $component->state($items);
                                     })
                                     ->columnSpanFull(),
 
-                                \Filament\Forms\Components\Hidden::make('property_id')
+                                Hidden::make('property_id')
                                     ->default($derivedPropertyId),
 
-                                \Filament\Forms\Components\Select::make('target_id')
+                                Select::make('target_id')
                                     ->label(__('eclipse-catalogue::property-value.modal_grouping.target_label'))
                                     ->helperText(__('eclipse-catalogue::property-value.grouping.helper_target'))
                                     ->required()
-                                    ->options(function (\Filament\Forms\Get $get) {
+                                    ->options(function (Get $get) {
                                         $query = PropertyValue::query();
                                         $propertyId = $get('property_id');
                                         if ($propertyId) {
@@ -332,13 +344,13 @@ class PropertyValueResource extends Resource
                                     ->body(__('eclipse-catalogue::property-value.grouping.success_grouped_body', ['count' => $updated, 'target' => $target->value]))
                                     ->success()->send();
                             } catch (\Throwable $e) {
-                                \Log::error('Bulk group failed', ['exception' => $e]);
+                                Log::error('Bulk group failed', ['exception' => $e]);
                                 Notification::make()->title(__('eclipse-catalogue::property-value.grouping.error_title'))->body(__('eclipse-catalogue::property-value.messages.merged_error_body'))->danger()->send();
                             }
                         })
                         ->deselectRecordsAfterCompletion(),
 
-                    Tables\Actions\BulkAction::make('ungroup_values')
+                    BulkAction::make('ungroup_values')
                         ->label(__('eclipse-catalogue::property-value.table.actions.remove_from_group'))
                         ->icon('heroicon-o-squares-2x2')
                         ->action(function (\Illuminate\Support\Collection $records) {
@@ -354,7 +366,7 @@ class PropertyValueResource extends Resource
                                     ->body(__('eclipse-catalogue::property-value.grouping.success_ungrouped_body', ['count' => $updated]))
                                     ->success()->send();
                             } catch (\Throwable $e) {
-                                \Log::error('Bulk ungroup failed', ['exception' => $e]);
+                                Log::error('Bulk ungroup failed', ['exception' => $e]);
                                 Notification::make()->title(__('eclipse-catalogue::property-value.grouping.error_title'))->body(__('eclipse-catalogue::property-value.messages.merged_error_body'))->danger()->send();
                             }
                         })
@@ -389,11 +401,11 @@ class PropertyValueResource extends Resource
                         ->default(BackgroundType::NONE->value)
                         ->live(),
                     ColorPicker::make('color')
-                        ->visible(fn (Get $get) => $get('type') === 's')
+                        ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('type') === 's')
                         ->live(),
                     Grid::make()
                         ->columns(4)
-                        ->visible(fn (Get $get) => $get('type') === 'g')
+                        ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('type') === 'g')
                         ->schema([
                             ColorPicker::make('color_start')->columnSpan(2)->live(),
                             ColorPicker::make('color_end')->columnSpan(2)->live(),
@@ -414,7 +426,7 @@ class PropertyValueResource extends Resource
                         ]),
                     ViewField::make('preview')
                         ->view('eclipse-catalogue::components.color-preview')
-                        ->visible(function (Get $get) {
+                        ->visible(function (\Filament\Schemas\Components\Utilities\Get $get) {
                             $bg = Background::fromForm([
                                 'type' => $get('type'),
                                 'color' => $get('color'),
@@ -426,7 +438,7 @@ class PropertyValueResource extends Resource
 
                             return $bg->hasRenderableCss();
                         })
-                        ->viewData(function (Get $get) {
+                        ->viewData(function (\Filament\Schemas\Components\Utilities\Get $get) {
                             $bg = Background::fromForm([
                                 'type' => $get('type'),
                                 'color' => $get('color'),

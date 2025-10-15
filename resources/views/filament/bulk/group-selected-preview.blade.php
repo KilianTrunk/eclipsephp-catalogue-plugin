@@ -9,11 +9,11 @@
             <li>
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-gray-400 select-none">-</span>
-                    <span class="font-medium">{{ $record->value }}</span>
-                    @if($record->is_group)
+                    <span class="font-medium">{{ is_array($record) ? ($record['value'] ?? '') : ($record->value ?? '') }}</span>
+                    @if(is_array($record) ? ($record['is_group'] ?? false) : ($record->is_group ?? false))
                         <x-filament::badge color="primary" class="!inline-flex !w-auto !px-2 !py-0.5">{{ __('eclipse-catalogue::property-value.ui.group_badge') }}</x-filament::badge>
-                    @elseif($record->group)
-                        <x-filament::badge color="warning" class="!inline-flex !w-auto !px-2 !py-0.5">{{ $record->group->value }}</x-filament::badge>
+                    @elseif(is_array($record) ? !empty($record['group_value'] ?? null) : !empty(optional($record->group)->value))
+                        <x-filament::badge color="warning" class="!inline-flex !w-auto !px-2 !py-0.5">{{ is_array($record) ? ($record['group_value'] ?? '') : (optional($record->group)->value ?? '') }}</x-filament::badge>
                     @endif
                 </div>
             </li>
