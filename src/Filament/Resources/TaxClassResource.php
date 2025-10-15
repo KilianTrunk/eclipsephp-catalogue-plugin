@@ -16,6 +16,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -66,19 +67,18 @@ class TaxClassResource extends Resource
                                 $rule->where($tenantFK, $tenantId);
                             }
 
-                                    return $rule;
-                                }
-                            ),
+                            return $rule;
+                        },
+                    ),
 
-                        TextInput::make('rate')
-                            ->label(__('eclipse-catalogue::tax-class.fields.rate'))
-                            ->required()
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->step(0.01)
-                            ->suffix('%'),
-                    ]),
+                TextInput::make('rate')
+                    ->label(__('eclipse-catalogue::tax-class.fields.rate'))
+                    ->required()
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->step(0.01)
+                    ->suffix('%'),
 
                 Textarea::make('description')
                     ->label(__('eclipse-catalogue::tax-class.fields.description'))
@@ -86,7 +86,7 @@ class TaxClassResource extends Resource
                     ->maxLength(65535)
                     ->columnSpanFull(),
 
-                \Filament\Forms\Components\Grid::make(3)
+                Grid::make(3)
                     ->schema([
                         Toggle::make('is_default')
                             ->label(__('eclipse-catalogue::tax-class.fields.is_default'))

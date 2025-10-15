@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('catalogue_product_data', function (Blueprint $table) {
+        Schema::table('pim_product_data', function (Blueprint $table) {
             $table->foreignId('tax_class_id')
                 ->nullable()
                 ->after('product_status_id')
@@ -20,7 +20,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('catalogue_product_data', function (Blueprint $table) {
+        Schema::table('pim_product_data', function (Blueprint $table) {
             $table->dropForeign(['tax_class_id']);
             $table->dropColumn('tax_class_id');
         });

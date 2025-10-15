@@ -77,7 +77,7 @@ class ProductResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    public static function form(Schema $form): Schema
+    public static function schema(Schema $form): Schema
     {
         return $form
             ->components([

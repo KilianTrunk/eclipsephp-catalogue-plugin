@@ -3,6 +3,7 @@
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages\ListTaxClasses;
 use Eclipse\Catalogue\Models\TaxClass;
 use Eclipse\Catalogue\Policies\TaxClassPolicy;
+use Livewire\Livewire;
 use Workbench\App\Models\User;
 
 beforeEach(function () {
@@ -62,6 +63,7 @@ test('unauthorized access can be prevented', function () {
     $this->user->givePermissionTo('view_any_tax_class');
 
     // Test that user cannot view specific tax class
+    $policy = new TaxClassPolicy;
     expect($policy->view($this->user, $taxClass))->toBeFalse();
 
     // Test that user cannot create tax classes
@@ -77,7 +79,7 @@ test('unauthorized access can be prevented', function () {
     $taxClass->delete();
     $this->assertSoftDeleted($taxClass);
 
-    livewire(ListTaxClasses::class)
+    Livewire::test(ListTaxClasses::class)
         ->filterTable('trashed')
         ->assertTableActionExists('restore')
         ->assertTableActionExists('forceDelete')
