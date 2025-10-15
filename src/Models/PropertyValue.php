@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
@@ -51,7 +52,7 @@ class PropertyValue extends Model implements HasMedia
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'catalogue_product_has_property_value', 'property_value_id', 'product_id')
+        return $this->belongsToMany(Product::class, 'pim_product_has_property_value', 'property_value_id', 'product_id')
             ->withTimestamps();
     }
 
@@ -165,11 +166,11 @@ class PropertyValue extends Model implements HasMedia
             $target = self::query()->lockForUpdate()->findOrFail($targetId);
 
             if ($target->id === $this->id) {
-                throw new \RuntimeException('Cannot merge a value into itself.');
+                throw new RuntimeException('Cannot merge a value into itself.');
             }
 
             if ($target->property_id !== $this->property_id) {
-                throw new \RuntimeException('Values must belong to the same property.');
+                throw new RuntimeException('Values must belong to the same property.');
             }
 
             if ($this->is_group && $target->group_value_id !== null) {
@@ -181,7 +182,16 @@ class PropertyValue extends Model implements HasMedia
                 $target->save();
             }
 
-            $pivotTable = 'catalogue_product_has_property_value';
+            if ($this->is_group && $target->group_value_id !== null) {
+                throw new \RuntimeException('Cannot merge a group into a value that is already a member of another group.');
+            }
+
+            if ($this->is_group && ! $target->is_group) {
+                $target->is_group = true;
+                $target->save();
+            }
+
+            $pivotTable = 'pim_product_has_property_value';
 
             $productIds = DB::table($pivotTable)
                 ->where('property_value_id', $this->id)
