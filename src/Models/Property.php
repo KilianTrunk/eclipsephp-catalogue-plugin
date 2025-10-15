@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use InvalidArgumentException;
 use Spatie\Translatable\HasTranslations;
 
 class Property extends Model
@@ -56,12 +57,20 @@ class Property extends Model
             if ($property->code) {
                 $property->code = strtolower($property->code);
             }
+            // Ensure color type properties are always multilingual
+            if ($property->isColorType()) {
+                $property->is_multilang = true;
+            }
         });
 
         static::updating(function (Property $property) {
             $property->validateTypeAndInputType();
             if ($property->isDirty('code') && $property->code) {
                 $property->code = strtolower($property->code);
+            }
+            // Ensure color type properties remain multilingual on updates
+            if ($property->isColorType()) {
+                $property->is_multilang = true;
             }
         });
 
@@ -90,9 +99,9 @@ class Property extends Model
     protected function validateTypeAndInputType(): void
     {
         if ($this->type && ! empty(trim($this->type))) {
-            $validTypes = [PropertyType::LIST->value, PropertyType::CUSTOM->value];
+            $validTypes = [PropertyType::LIST->value, PropertyType::COLOR->value, PropertyType::CUSTOM->value];
             if (! in_array($this->type, $validTypes)) {
-                throw new \InvalidArgumentException("Invalid type '{$this->type}'. Must be one of: ".implode(', ', $validTypes));
+                throw new InvalidArgumentException("Invalid type '{$this->type}'. Must be one of: ".implode(', ', $validTypes));
             }
         }
 
@@ -108,7 +117,7 @@ class Property extends Model
             ];
 
             if (! in_array($this->input_type, $validInputTypes)) {
-                throw new \InvalidArgumentException("Invalid input_type '{$this->input_type}'. Must be one of: ".implode(', ', $validInputTypes));
+                throw new InvalidArgumentException("Invalid input_type '{$this->input_type}'. Must be one of: ".implode(', ', $validInputTypes));
             }
         }
     }
@@ -151,8 +160,23 @@ class Property extends Model
         return $this->type === PropertyType::LIST->value;
     }
 
+    public function isColorType(): bool
+    {
+        return $this->type === PropertyType::COLOR->value;
+    }
+
     public function supportsMultilang(): bool
     {
+        // Color type properties are always multilingual
+        if ($this->isColorType()) {
+            return true;
+        }
+
+        // Only custom type properties can be multilingual based on input type
+        if (! $this->isCustomType()) {
+            return false;
+        }
+
         return $this->is_multilang && in_array($this->input_type, [
             PropertyInputType::STRING->value,
             PropertyInputType::TEXT->value,

@@ -9,6 +9,7 @@ return [
         'info_url' => 'Info URL',
         'image' => 'Image',
         'sort' => 'Sort Order',
+        'import_file' => 'Import File',
     ],
 
     'sections' => [
@@ -25,6 +26,7 @@ return [
         'info_url' => 'Optional "read more" link',
         'image' => 'Optional image for this value (e.g., brand logo)',
         'sort' => 'Lower numbers appear first',
+        'import_file' => 'Upload an Excel (.xlsx, .xls) or CSV file with two columns: <strong>name</strong> and <strong>hex</strong>. Example: Red, #FF0000',
     ],
 
     'table' => [
@@ -46,9 +48,14 @@ return [
         ],
     ],
 
+    'actions' => [
+        'import' => 'Import Colors',
+    ],
+
     'modal' => [
         'create_heading' => 'Create Property Value',
         'edit_heading' => 'Edit Property Value',
+        'import_heading' => 'Import Color Values',
         'merge_heading' => 'Merge Value',
         'merge_from_label' => 'Merge value…',
         'merge_to_label' => 'With value…*',
@@ -77,6 +84,21 @@ return [
         'breadcrumbs' => [
             'properties' => 'Properties',
             'list' => 'List',
+        ],
+    ],
+
+    'notifications' => [
+        'import_queued' => [
+            'title' => 'Import Queued',
+            'body' => 'Color import has been queued and will be processed in the background.',
+        ],
+        'import_completed' => [
+            'title' => 'Import Completed',
+            'body' => 'Import completed: :inserted inserted, :skipped skipped, :errors errors.',
+            'errors' => 'Errors',
+        ],
+        'import_failed' => [
+            'title' => 'Import Failed',
         ],
     ],
 ];

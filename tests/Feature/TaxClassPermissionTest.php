@@ -1,5 +1,6 @@
 <?php
 
+use Eclipse\Catalogue\Filament\Resources\TaxClassResource\Pages\ListTaxClasses;
 use Eclipse\Catalogue\Models\TaxClass;
 use Eclipse\Catalogue\Policies\TaxClassPolicy;
 use Workbench\App\Models\User;
@@ -52,13 +53,13 @@ test('unauthorized access can be prevented', function () {
         'description' => 'Test tax rate',
         'rate' => 15.00,
         'is_default' => false,
-        'site_id' => $site->id,
     ]);
 
-    $policy = new \Eclipse\Catalogue\Policies\TaxClassPolicy;
+    // Authorization: user should not be able to view any
+    expect((new TaxClassPolicy)->viewAny($this->user))->toBeFalse();
 
-    // Test that user cannot view any tax classes
-    expect($policy->viewAny($this->user))->toBeFalse();
+    // Add direct permission to view the table, since otherwise any other action below is not available even for testing
+    $this->user->givePermissionTo('view_any_tax_class');
 
     // Test that user cannot view specific tax class
     expect($policy->view($this->user, $taxClass))->toBeFalse();
@@ -76,9 +77,10 @@ test('unauthorized access can be prevented', function () {
     $taxClass->delete();
     $this->assertSoftDeleted($taxClass);
 
-    // Test that user cannot restore tax class
-    expect($policy->restore($this->user, $taxClass))->toBeFalse();
-
-    // Test that user cannot force delete tax class
-    expect($policy->forceDelete($this->user, $taxClass))->toBeFalse();
+    livewire(ListTaxClasses::class)
+        ->filterTable('trashed')
+        ->assertTableActionExists('restore')
+        ->assertTableActionExists('forceDelete')
+        ->assertTableActionDisabled('restore', $taxClass)
+        ->assertTableActionDisabled('forceDelete', $taxClass);
 });

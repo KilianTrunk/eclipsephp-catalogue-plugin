@@ -2,12 +2,14 @@
 
 namespace Eclipse\Catalogue\Models;
 
+use Eclipse\Catalogue\Casts\BackgroundCast;
 use Eclipse\Catalogue\Factories\PropertyValueFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
@@ -24,6 +26,7 @@ class PropertyValue extends Model implements HasMedia
         'sort',
         'info_url',
         'image',
+        'color',
     ];
 
     public array $translatable = [
@@ -35,6 +38,7 @@ class PropertyValue extends Model implements HasMedia
     protected $casts = [
         'sort' => 'integer',
         'property_id' => 'integer',
+        'color' => BackgroundCast::class,
     ];
 
     public function property(): BelongsTo
@@ -44,7 +48,7 @@ class PropertyValue extends Model implements HasMedia
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'catalogue_product_has_property_value', 'property_value_id', 'product_id')
+        return $this->belongsToMany(Product::class, 'pim_product_has_property_value', 'property_value_id', 'product_id')
             ->withTimestamps();
     }
 
@@ -82,7 +86,38 @@ class PropertyValue extends Model implements HasMedia
             $attributes['image'] = $translation !== '' ? $translation : null;
         }
 
+        if (array_key_exists('color', $this->attributes)) {
+            $raw = $this->attributes['color'];
+            if (is_string($raw) && $raw !== '') {
+                $decoded = json_decode($raw, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $attributes['color'] = $decoded;
+                }
+            } elseif (is_object($this->getAttribute('color')) && method_exists($this->getAttribute('color'), 'toArray')) {
+                $attributes['color'] = $this->getAttribute('color')->toArray();
+            } else {
+                $attributes['color'] = null;
+            }
+        }
+
         return $attributes;
+    }
+
+    /**
+     * Get the color of the property value.
+     */
+    public function getColor(): ?string
+    {
+        if (! array_key_exists('color', $this->attributes)) {
+            return null;
+        }
+
+        $bg = $this->getAttribute('color');
+        if (is_object($bg)) {
+            return (string) $bg;
+        }
+
+        return null;
     }
 
     /**
@@ -100,14 +135,14 @@ class PropertyValue extends Model implements HasMedia
             $target = self::query()->lockForUpdate()->findOrFail($targetId);
 
             if ($target->id === $this->id) {
-                throw new \RuntimeException('Cannot merge a value into itself.');
+                throw new RuntimeException('Cannot merge a value into itself.');
             }
 
             if ($target->property_id !== $this->property_id) {
-                throw new \RuntimeException('Values must belong to the same property.');
+                throw new RuntimeException('Values must belong to the same property.');
             }
 
-            $pivotTable = 'catalogue_product_has_property_value';
+            $pivotTable = 'pim_product_has_property_value';
 
             $productIds = DB::table($pivotTable)
                 ->where('property_value_id', $this->id)
