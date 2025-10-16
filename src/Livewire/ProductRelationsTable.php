@@ -4,9 +4,14 @@ namespace Eclipse\Catalogue\Livewire;
 
 use Eclipse\Catalogue\Enums\ProductRelationType;
 use Eclipse\Catalogue\Models\ProductRelation;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Contracts\TranslatableContentDriver;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -15,9 +20,9 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 
-class ProductRelationsTable extends Component implements HasForms, HasTable
+class ProductRelationsTable extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithForms, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public int $productId;
 
@@ -26,11 +31,6 @@ class ProductRelationsTable extends Component implements HasForms, HasTable
     public function makeFilamentTranslatableContentDriver(): ?TranslatableContentDriver
     {
         return null;
-    }
-
-    public function form(Form $form): Form
-    {
-        return $form;
     }
 
     public function mount(int $productId, string $type): void
@@ -67,7 +67,7 @@ class ProductRelationsTable extends Component implements HasForms, HasTable
                     }),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('add')
+                Action::make('add')
                     ->label('Add products')
                     ->icon('heroicon-o-plus')
                     ->modalHeading('Select products')
@@ -83,21 +83,21 @@ class ProductRelationsTable extends Component implements HasForms, HasTable
                     ->closeModalByClickingAway(false),
             ])
             ->actions([
-                Tables\Actions\Action::make('edit_product')
+                Action::make('edit_product')
                     ->label('Edit Product')
                     ->icon('heroicon-o-pencil')
                     ->url(fn ($record): string => \Eclipse\Catalogue\Filament\Resources\ProductResource::getUrl('edit', ['record' => $record->child_id]))
                     ->openUrlInNewTab(),
 
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->label('Remove')
                     ->modalHeading(fn ($record) => 'Remove '.($record->child?->name ?? 'product'))
                     ->modalSubmitActionLabel('Remove')
                     ->modalCancelActionLabel('Cancel'),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->label('Remove')
                         ->modalHeading('Remove selected')
                         ->modalSubmitActionLabel('Remove')
@@ -106,7 +106,7 @@ class ProductRelationsTable extends Component implements HasForms, HasTable
             ])
             ->reorderable('sort')
             ->reorderRecordsTriggerAction(
-                fn (Tables\Actions\Action $action, bool $isReordering) => $action
+                fn (Action $action, bool $isReordering) => $action
                     ->button()
                     ->label($isReordering ? 'Disable reordering' : 'Enable reordering')
                     ->icon($isReordering ? 'heroicon-o-x-mark' : 'heroicon-o-arrows-up-down')

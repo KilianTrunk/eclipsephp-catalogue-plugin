@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('pim_product_relations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('parent_id')
-                ->constrained('catalogue_products', 'id')
+                ->constrained('pim_products', 'id')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
             $table->foreignId('child_id')
-                ->constrained('catalogue_products', 'id')
+                ->constrained('pim_products', 'id')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
             $table->string('type', 50);

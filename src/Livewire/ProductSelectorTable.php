@@ -8,10 +8,12 @@ use Eclipse\Catalogue\Models\ProductRelation;
 use Eclipse\Catalogue\Models\ProductStatus;
 use Eclipse\Catalogue\Models\ProductType;
 use Eclipse\Catalogue\Services\ProductRelationService;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Contracts\TranslatableContentDriver;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -22,9 +24,9 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 
-class ProductSelectorTable extends Component implements HasForms, HasTable
+class ProductSelectorTable extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithForms, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public int $productId;
 
@@ -57,13 +59,10 @@ class ProductSelectorTable extends Component implements HasForms, HasTable
         return $table
             ->query($this->getProductsQuery())
             ->columns([
-                Tables\Columns\ViewColumn::make('selected')
+                Tables\Columns\CheckboxColumn::make('selected')
                     ->label('')
-                    ->view('eclipse-catalogue::filament.forms.components.checkbox')
-                    ->state(fn (Product $record) => [
-                        'id' => $record->id,
-                        'checked' => $this->isProductSelected($record->id),
-                    ])
+                    ->getStateUsing(fn (Product $record) => $this->isProductSelected($record->id))
+                    ->updateStateUsing(fn ($record, $state) => $this->toggleProductSelection($record->id))
                     ->width('60px')
                     ->alignCenter()
                     ->sortable(false),
@@ -311,7 +310,7 @@ class ProductSelectorTable extends Component implements HasForms, HasTable
             ->paginated([10, 25, 50, 100])
             ->defaultPaginationPageOption(10)
             ->headerActions([
-                Tables\Actions\Action::make('add_selected')
+                Action::make('add_selected')
                     ->label(fn () => 'Add selected products ('.count($this->persistentSelection).')')
                     ->icon('heroicon-o-plus')
                     ->disabled(fn () => empty($this->persistentSelection))
@@ -378,11 +377,6 @@ class ProductSelectorTable extends Component implements HasForms, HasTable
         }
 
         return $query;
-    }
-
-    public function form(Form $form): Form
-    {
-        return $form;
     }
 
     public function makeFilamentTranslatableContentDriver(): ?TranslatableContentDriver

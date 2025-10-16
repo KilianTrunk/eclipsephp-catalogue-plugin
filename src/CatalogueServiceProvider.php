@@ -12,7 +12,6 @@ use Eclipse\Catalogue\Filament\Resources\ProductTypeResource;
 use Eclipse\Catalogue\Filament\Resources\PropertyResource;
 use Eclipse\Catalogue\Filament\Resources\PropertyValueResource;
 use Eclipse\Catalogue\Filament\Resources\TaxClassResource;
-use Eclipse\Catalogue\Livewire\TenantSwitcher;
 use Eclipse\Catalogue\Models\Category;
 use Eclipse\Catalogue\Models\Product;
 use Filament\Support\Assets\Css;

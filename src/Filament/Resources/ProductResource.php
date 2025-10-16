@@ -576,7 +576,7 @@ class ProductResource extends Resource
                                             ->label('Related')
                                             ->icon('heroicon-o-link')
                                             ->schema([
-                                                ViewComponent::make('eclipse-catalogue::livewire.product-relations-table')
+                                                View::make('eclipse-catalogue::livewire.product-relations-table')
                                                     ->viewData(fn (?Product $record) => [
                                                         'productId' => $record?->id,
                                                         'type' => ProductRelationType::RELATED->value,
@@ -587,7 +587,7 @@ class ProductResource extends Resource
                                             ->label('Cross-sell')
                                             ->icon('heroicon-o-plus-circle')
                                             ->schema([
-                                                ViewComponent::make('eclipse-catalogue::livewire.product-relations-table')
+                                                View::make('eclipse-catalogue::livewire.product-relations-table')
                                                     ->viewData(fn (?Product $record) => [
                                                         'productId' => $record?->id,
                                                         'type' => ProductRelationType::CROSS_SELL->value,
@@ -598,7 +598,7 @@ class ProductResource extends Resource
                                             ->label('Upsell')
                                             ->icon('heroicon-o-arrow-trending-up')
                                             ->schema([
-                                                ViewComponent::make('eclipse-catalogue::livewire.product-relations-table')
+                                                View::make('eclipse-catalogue::livewire.product-relations-table')
                                                     ->viewData(fn (?Product $record) => [
                                                         'productId' => $record?->id,
                                                         'type' => ProductRelationType::UPSELL->value,

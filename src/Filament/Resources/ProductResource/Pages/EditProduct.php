@@ -4,8 +4,8 @@ namespace Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 
 use Eclipse\Catalogue\Enums\ProductRelationType;
 use Eclipse\Catalogue\Filament\Resources\ProductResource;
-use Eclipse\Catalogue\Models\ProductRelation;
 use Eclipse\Catalogue\Models\Group;
+use Eclipse\Catalogue\Models\ProductRelation;
 use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Models\PropertyValue;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
@@ -227,7 +227,7 @@ class EditProduct extends EditRecord
         return [];
     }
 
-    public function form(Schema $schema): Schema
+    public function schema(Schema $schema): Schema
     {
         return $schema;
     }

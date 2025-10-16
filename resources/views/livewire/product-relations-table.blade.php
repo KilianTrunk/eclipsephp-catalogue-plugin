@@ -1,4 +1,1 @@
-@livewire(\Eclipse\Catalogue\Livewire\ProductRelationsTable::class, [
-    'productId' => $productId,
-    'type' => $type
-])
+<livewire:eclipse.catalogue.livewire.product-relations-table :product-id="$productId" :type="$type" />
