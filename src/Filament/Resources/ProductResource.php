@@ -735,8 +735,7 @@ class ProductResource extends Resource
                         return $record->measureUnit?->name ? ' '.$record->measureUnit->name : '';
                     })
                     ->width('120px')
-                    ->toggleable()
-                    ->toggledHiddenByDefault(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('date_stocked')
                     ->label(__('eclipse-catalogue::product.table.columns.date_stocked'))
@@ -745,8 +744,7 @@ class ProductResource extends Resource
                     })
                     ->date()
                     ->width('120px')
-                    ->toggleable()
-                    ->toggledHiddenByDefault(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('type.name')
                     ->label(__('eclipse-catalogue::product.table.columns.type')),
@@ -794,8 +792,7 @@ class ProductResource extends Resource
 
                         return $tariffCode->code.' — '.$name;
                     })
-                    ->toggleable()
-                    ->toggledHiddenByDefault()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable()
                     ->copyable(),
 
@@ -992,7 +989,8 @@ class ProductResource extends Resource
                     RestoreBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->deferColumnManager(false);
     }
 
     public static function getPages(): array

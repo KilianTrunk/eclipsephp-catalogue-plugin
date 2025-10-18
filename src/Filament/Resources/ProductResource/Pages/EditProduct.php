@@ -5,7 +5,6 @@ namespace Eclipse\Catalogue\Filament\Resources\ProductResource\Pages;
 use Eclipse\Catalogue\Filament\Resources\ProductResource;
 use Eclipse\Catalogue\Models\Group;
 use Eclipse\Catalogue\Models\Property;
-use Eclipse\Catalogue\Models\PropertyValue;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Eclipse\Core\Models\Locale;
@@ -273,7 +272,7 @@ class EditProduct extends EditRecord
         return [];
     }
 
-    public function form(Schema $schema): Schema
+    public function schema(Schema $schema): Schema
     {
         return $schema;
     }
