@@ -11,14 +11,15 @@ use Eclipse\Catalogue\Models\Property;
 use Eclipse\Catalogue\Traits\HandlesTenantData;
 use Eclipse\Catalogue\Traits\HasTenantFields;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\CreateRecord\Concerns\Translatable;
 
 class CreateProduct extends CreateRecord
 {
-    use HandlesImageUploads;
+    use HandlesImageUploads {
+        afterCreate as handleImageUploadsAfterCreate;
+    }
     use HandlesTenantData, HasTenantFields;
     use Translatable;
 
@@ -33,6 +34,11 @@ class CreateProduct extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        if (isset($data['images'])) {
+            $this->temporaryImages = $data['images'];
+            unset($data['images']);
+        }
+
         foreach (array_keys($data) as $key) {
             if (str_starts_with($key, 'property_values_') || str_starts_with($key, 'custom_property_')) {
                 unset($data[$key]);
@@ -50,11 +56,6 @@ class CreateProduct extends CreateRecord
     protected function getFormMutuallyExclusiveFlagSets(): array
     {
         return [];
-    }
-
-    public function form(Schema $schema): Schema
-    {
-        return $schema;
     }
 
     protected function handleRecordCreation(array $data): Model
@@ -93,6 +94,8 @@ class CreateProduct extends CreateRecord
         if (! $product) {
             return;
         }
+
+        $this->handleImageUploadsAfterCreate();
 
         $state = $this->form->getState();
         $rawState = $this->form->getRawState();
