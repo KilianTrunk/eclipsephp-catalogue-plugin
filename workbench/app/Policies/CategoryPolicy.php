@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Workbench\App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use Eclipse\Catalogue\Models\Category;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class CategoryPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_category');
@@ -71,5 +71,4 @@ class CategoryPolicy
     {
         return $authUser->can('force_delete_any_category');
     }
-
 }

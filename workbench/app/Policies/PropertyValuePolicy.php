@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Workbench\App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use Eclipse\Catalogue\Models\PropertyValue;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PropertyValuePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_property_value');
@@ -71,5 +71,4 @@ class PropertyValuePolicy
     {
         return $authUser->can('force_delete_any_property_value');
     }
-
 }
