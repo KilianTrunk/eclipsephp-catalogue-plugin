@@ -43,7 +43,7 @@ return [
     'policies' => [
         'path' => app_path('Policies'),
         'merge' => true,
-        'generate' => true,
+        'generate' => false, // Disabled: policies are registered via AuthServiceProvider using existing ones from src/Policies/
         'methods' => [
             'viewAny', 'view', 'create', 'update', 'restore', 'restoreAny',
             'replicate', 'reorder', 'delete', 'deleteAny', 'forceDelete', 'forceDeleteAny',
